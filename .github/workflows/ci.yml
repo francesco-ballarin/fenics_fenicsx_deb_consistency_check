@@ -34,3 +34,21 @@ jobs:
           export DEBIAN_FRONTEND="noninteractive"
           apt -y -q update
           ${{ matrix.setup_container }}
+      - name: Determine if FEniCS is installed
+        id: has_fenics
+        run: |
+          python3 -c "import dolfin" 2> /dev/null && HAS_FENICS="true" || HAS_FENICS="false"
+          echo "has_fenics=${HAS_FENICS}" >> ${GITHUB_OUTPUT}
+      - name: Determine if FEniCSx is installed
+        id: has_fenicsx
+        run: |
+          python3 -c "import dolfinx" 2> /dev/null && HAS_FENICSX="true" || HAS_FENICSX="false"
+          echo "has_fenicsx=${HAS_FENICSX}" >> ${GITHUB_OUTPUT}
+      - name: Run FEniCS tests
+        if: steps.has_fenics.outputs.has_fenics == 'true'
+        run: |
+          echo "Mock FEniCS test"
+      - name: Run FEniCSx tests
+        if: steps.has_fenicsx.outputs.has_fenicsx == 'true'
+        run: |
+          echo "Mock FEniCSx test"
