@@ -45,7 +45,7 @@ def get_package_main_file() -> typing.Callable[[str, str], str]:
         if run_import_file.returncode == 0:
             return run_import_file.stdout.decode().strip()
         else:
-            raise RuntimeError(
+            raise ImportError(
                 f"Importing {package} failed.\n"
                 f"stdout contains {run_import_file.stdout.decode().strip()}\n"
                 f"stderr contains {run_import_file.stderr.decode().strip()}\n")

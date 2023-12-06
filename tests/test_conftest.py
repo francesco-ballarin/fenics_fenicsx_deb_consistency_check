@@ -40,6 +40,8 @@ def test_backend_enviornment_variable(
             assert enviornment_variable_value == "true"
         else:
             assert enviornment_variable_value == "false"
+    else:
+        pytest.skip(f"Missing environment variable {enviornment_variable}")
 
 
 def test_get_numpy_main_file(get_package_main_file: typing.Callable[[str, str], str]) -> None:

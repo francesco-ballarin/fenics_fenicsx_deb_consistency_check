@@ -26,19 +26,18 @@ class VirtualEnv:
             / "site-packages"
         )
         self.executable = str(self.path / "bin" / "python3")
-        self.opts = ["--no-setuptools", "--no-wheel"]
         self.env = dict(os.environ)
         self.env.pop("PYTHONPATH", None)  # ensure isolation
 
     def create(self) -> None:
         """Create a virtual environment, and add it to sys.path."""
-        args = [str(self.path), "--python", sys.executable, *self.opts]
+        args = [str(self.path), "--python", sys.executable, "--system-site-packages", "--no-wheel"]
         virtualenv.cli_run(args, env=self.env)
 
     def install_package(self, package: str) -> None:
         """Install a package in the virtual environment."""
         run_install = subprocess.run(
-            f"{self.executable} -m pip install {package}", shell=True, capture_output=True)
+            f"{self.executable} -m pip install --ignore-installed {package}", shell=True, capture_output=True)
         if run_install.returncode != 0:
             raise RuntimeError(
                 f"Installing {package} failed.\n"
