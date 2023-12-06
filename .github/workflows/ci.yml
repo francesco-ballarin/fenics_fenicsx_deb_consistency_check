@@ -33,7 +33,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND="noninteractive"
           apt -y -q update
-          apt install -y -qq python3-pip python3-virtualenv
+          apt install -y -qq git python3-pip python3-virtualenv
           rm /usr/lib/python3.11/EXTERNALLY-MANAGED
       - name: Install pip dependencies
         run: |
@@ -65,22 +65,26 @@ jobs:
           echo "has_fenicsx=${HAS_FENICSX}" >> ${GITHUB_OUTPUT}
       - name: Patch backends with the proposed changes
         run: |
+          export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
+          export HAS_FENICSX=${{ steps.has_fenicsx.outputs.has_fenicsx }}
           REPO_DIR=${PWD}
           if [[ "${HAS_FENICS}" == "true" ]]; then
-            pushd $(python3 -c "import dolfin, os; print(os.path.basename(dolfin.__file__))")
-            patch -p 1 < ${REPO_DIR}/proposal/patch_dolfin_init.patch
+            pushd $(python3 -c "import dolfin, os; print(os.path.dirname(dolfin.__file__))")
+            patch -p 2 < ${REPO_DIR}/proposal/patch_dolfin_init.patch
             cp ${REPO_DIR}/proposal/_deb_consistency_check.py .
             popd
           fi
           if [[ "${HAS_FENICSX}" == "true" ]]; then
-            pushd $(python3 -c "import dolfinx, os; print(os.path.basename(dolfinx.__file__))")
-            patch -p 1 < ${REPO_DIR}/proposal/patch_dolfinx_init.patch
+            pushd $(python3 -c "import dolfinx, os; print(os.path.dirname(dolfinx.__file__))")
+            patch -p 2 < ${REPO_DIR}/proposal/patch_dolfinx_init.patch
             cp ${REPO_DIR}/proposal/_deb_consistency_check.py .
             popd
           fi
         shell: bash
       - name: Verify that patched backends still import correctly
         run: |
+          export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
+          export HAS_FENICSX=${{ steps.has_fenicsx.outputs.has_fenicsx }}
           if [[ "${HAS_FENICS}" == "true" ]]; then
             python3 -c "import dolfin"
           fi

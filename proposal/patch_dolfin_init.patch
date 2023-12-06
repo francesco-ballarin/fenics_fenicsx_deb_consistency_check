@@ -1,13 +1,13 @@
-diff --git a/dolfinx/__init__.py b/dolfinx/__init__.py
-index 52edc9c..b90a2d2 100644
---- a/dolfinx/__init__.py
-+++ b/dolfinx/__init__.py
-@@ -35,6 +35,8 @@ except ImportError:
-     default_scalar_type = _np.float64
-     default_real_type = _np.float64
+diff --git a/dolfin/__init__.py b/dolfin/__init__.py
+index 83b2c7a..528c6e2 100644
+--- a/dolfin/__init__.py
++++ b/dolfin/__init__.py
+@@ -30,6 +30,8 @@ del sys
+ # sys.setdlopenflags(stored_dlopen_flags)
+ # del sys
  
-+import dolfinx._deb_consistency_check
++import dolfin._deb_consistency_check
 +
- from dolfinx import common
- from dolfinx import cpp as _cpp
- from dolfinx import fem, geometry, graph, io, jit, la, log, mesh, nls, plot
+ # Import cpp modules
+ from .cpp import __version__
+ 
