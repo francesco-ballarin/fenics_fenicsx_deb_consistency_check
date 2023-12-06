@@ -16,24 +16,43 @@ jobs:
       matrix:
         include:
           - backend: dolfin-only
-            setup_container: |
+            setup_backends: |
               apt install -y -qq fenics
           - backend: dolfinx-only
-            setup_container: |
+            setup_backends: |
               apt install -y -qq fenicsx
           - backend: dolfin-and-dolfinx
-            setup_container: |
+            setup_backends: |
               apt install -y -qq fenics
               apt install -y -qq fenicsx
       fail-fast: false
     container: debian:testing
     steps:
       - uses: actions/checkout@v4
-      - name: Setup container
+      - name: Install apt dependencies
         run: |
           export DEBIAN_FRONTEND="noninteractive"
           apt -y -q update
-          ${{ matrix.setup_container }}
+          apt install -y -qq python3-pip
+          rm /usr/lib/python3.11/EXTERNALLY-MANAGED
+      - name: Install pip dependencies
+        run: |
+          python3 -m pip -q install -r tests/requirements.txt
+      - name: Run ruff
+        run: |
+          python3 -m ruff .
+      - name: Run isort
+        run: |
+          python3 -m isort --check --diff .
+      - name: Run mypy
+        run: |
+          python3 -m mypy .
+      - name: Run yamllint
+        run: |
+          python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
+      - name: Install backends
+        run: |
+          ${{ matrix.setup_backends }}
       - name: Determine if FEniCS is installed
         id: has_fenics
         run: |
@@ -44,11 +63,9 @@ jobs:
         run: |
           python3 -c "import dolfinx" 2> /dev/null && HAS_FENICSX="true" || HAS_FENICSX="false"
           echo "has_fenicsx=${HAS_FENICSX}" >> ${GITHUB_OUTPUT}
-      - name: Run FEniCS tests
-        if: steps.has_fenics.outputs.has_fenics == 'true'
+      - name: Run tests
         run: |
-          echo "Mock FEniCS test"
-      - name: Run FEniCSx tests
-        if: steps.has_fenicsx.outputs.has_fenicsx == 'true'
-        run: |
-          echo "Mock FEniCSx test"
+          export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
+          export HAS_FENICSX=${{ steps.has_fenicsx.outputs.has_fenicsx }}
+          echo "Running tests for HAS_FENICS=${HAS_FENICS} and HAS_FENICSX=${HAS_FENICSX}"
+          pytest -svv tests
