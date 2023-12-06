@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - backend: dolfin-only
+            setup_container: |
+              apt install -y -qq fenics
+          - backend: dolfinx-only
+            setup_container: |
+              apt install -y -qq fenicsx
+          - backend: dolfin-and-dolfinx
+            setup_container: |
+              apt install -y -qq fenics
+              apt install -y -qq fenicsx
+      fail-fast: false
+    container: debian:testing
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup container
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt -y -q update
+          ${{ matrix.setup_container }}
