@@ -53,6 +53,22 @@ jobs:
       - name: Install backends
         run: |
           ${{ matrix.setup_backends }}
+      - name: Patch backends with the proposed changes
+        run: |
+          REPO_DIR=${PWD}
+          if [[ "${HAS_FENICS}" == "true" ]]; then
+            pushd $(python3 -c "import dolfin, os; print(os.path.basename(dolfin.__file__))")
+            patch -p 1 < ${REPO_DIR}/proposal/patch_dolfin_init.patch
+            cp ${REPO_DIR}/proposal/_deb_consistency_check.py .
+            popd
+          fi
+          if [[ "${HAS_FENICSX}" == "true" ]]; then
+            pushd $(python3 -c "import dolfinx, os; print(os.path.basename(dolfinx.__file__))")
+            patch -p 1 < ${REPO_DIR}/proposal/patch_dolfinx_init.patch
+            cp ${REPO_DIR}/proposal/_deb_consistency_check.py .
+            popd
+          fi
+        shell: bash
       - name: Determine if FEniCS is installed
         id: has_fenics
         run: |

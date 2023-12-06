@@ -1,0 +1,13 @@
+diff --git a/dolfin/__init__.py b/dolfin/__init__.py
+index 83b2c7a..528c6e2 100644
+--- a/dolfin/__init__.py
++++ b/dolfin/__init__.py
+@@ -30,6 +30,8 @@ del sys
+ # sys.setdlopenflags(stored_dlopen_flags)
+ # del sys
+ 
++import ._deb_consistency_check
++
+ # Import cpp modules
+ from .cpp import __version__
+ 
