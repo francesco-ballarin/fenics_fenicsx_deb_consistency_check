@@ -2,4 +2,5 @@ isort
 mypy
 pytest
 ruff
+virtualenv
 yamllint

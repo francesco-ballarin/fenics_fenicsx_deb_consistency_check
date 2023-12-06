@@ -33,7 +33,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND="noninteractive"
           apt -y -q update
-          apt install -y -qq python3-pip
+          apt install -y -qq python3-pip python3-virtualenv
           rm /usr/lib/python3.11/EXTERNALLY-MANAGED
       - name: Install pip dependencies
         run: |
