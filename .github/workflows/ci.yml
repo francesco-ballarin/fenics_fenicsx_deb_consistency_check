@@ -53,6 +53,16 @@ jobs:
       - name: Install backends
         run: |
           ${{ matrix.setup_backends }}
+      - name: Determine if FEniCS is installed
+        id: has_fenics
+        run: |
+          python3 -c "import dolfin" 2> /dev/null && HAS_FENICS="true" || HAS_FENICS="false"
+          echo "has_fenics=${HAS_FENICS}" >> ${GITHUB_OUTPUT}
+      - name: Determine if FEniCSx is installed
+        id: has_fenicsx
+        run: |
+          python3 -c "import dolfinx" 2> /dev/null && HAS_FENICSX="true" || HAS_FENICSX="false"
+          echo "has_fenicsx=${HAS_FENICSX}" >> ${GITHUB_OUTPUT}
       - name: Patch backends with the proposed changes
         run: |
           REPO_DIR=${PWD}
@@ -69,16 +79,15 @@ jobs:
             popd
           fi
         shell: bash
-      - name: Determine if FEniCS is installed
-        id: has_fenics
+      - name: Verify that patched backends still import correctly
         run: |
-          python3 -c "import dolfin" 2> /dev/null && HAS_FENICS="true" || HAS_FENICS="false"
-          echo "has_fenics=${HAS_FENICS}" >> ${GITHUB_OUTPUT}
-      - name: Determine if FEniCSx is installed
-        id: has_fenicsx
-        run: |
-          python3 -c "import dolfinx" 2> /dev/null && HAS_FENICSX="true" || HAS_FENICSX="false"
-          echo "has_fenicsx=${HAS_FENICSX}" >> ${GITHUB_OUTPUT}
+          if [[ "${HAS_FENICS}" == "true" ]]; then
+            python3 -c "import dolfin"
+          fi
+          if [[ "${HAS_FENICSX}" == "true" ]]; then
+            python3 -c "import dolfinx"
+          fi
+        shell: bash
       - name: Run tests
         run: |
           export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
