@@ -5,109 +5,90 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 """Checks that FEniCS/FEniCSx components are not being imported from non-system wide locations."""
 
+import importlib
 import os
+import typing
 
-FENICS_SKIP_DEB_CONSISTENCY_CHECK = os.getenv("FENICS_SKIP_DEB_CONSISTENCY_CHECK") is not None
 
-if not FENICS_SKIP_DEB_CONSISTENCY_CHECK:
-    CONTACT_ON_ERROR = "Please report this error on https://fenicsproject.discourse.group/ ."
+def _deb_consistency_check(
+    fenics_name: str,
+    dependencies_import_name: typing.List[str],
+    dependencies_apt_name: typing.List[str],
+    dependencies_pypi_name: typing.List[str],
+    dependencies_optional: typing.List[bool],
+    dependencies_extra_error_message: typing.List[str]
+) -> None:
+    """Carry out a consistency check between FEniCS/FEniCSx debian packages and local environment."""
+    assert len(dependencies_import_name) == len(dependencies_apt_name)
+    assert len(dependencies_import_name) == len(dependencies_pypi_name)
+    assert len(dependencies_import_name) == len(dependencies_optional)
+    assert len(dependencies_import_name) == len(dependencies_extra_error_message)
 
-    system_install_path = os.path.dirname(os.path.dirname(__file__))
-    assert system_install_path.startswith("/usr/lib"), (
-        "Did something change in debian/ubuntu packaging for this path to change?\n"
-        + f"Expected {system_install_path} to start with /usr/lib.\n\n"
-        + CONTACT_ON_ERROR
-    )
+    skip_deb_consistency_check_env_name = f"{fenics_name.upper()}_SKIP_DEB_CONSISTENCY_CHECK"
+    skip_deb_consistency_check_env_value = os.getenv(skip_deb_consistency_check_env_name) is not None
 
-    backend_name = os.path.basename(os.path.dirname(__file__))
-    assert backend_name in ("dolfin", "dolfinx"), (
-        "Did something change in debian/ubuntu packaging for this assert to fail?\n"
-        + f"Got unexpected value {backend_name}.\n\n"
-        + CONTACT_ON_ERROR
-    )
+    if not skip_deb_consistency_check_env_value:
+        non_system_wide_dependencies: typing.List[
+            typing.Optional[typing.Dict[str, str]]
+        ] = [None] * len(dependencies_import_name)
+        for (dependency_id, dependency_import_name) in enumerate(dependencies_import_name):
+            dependency_module_system_path = f"/usr/lib/python3/dist-packages/{dependency_import_name}/__init__.py"
+            broken_dependencies_error = (
+                f"{dependency_import_name} is missing or broken. "
+                f"Please try to fix it with 'apt install --reinstall {dependencies_apt_name[dependency_id]}'."
+            )
+            if not os.path.exists(dependency_module_system_path) and not dependencies_optional[dependency_id]:
+                raise ImportError(broken_dependencies_error)
+            try:
+                dependency_module = importlib.import_module(dependency_import_name)
+            except ImportError:
+                if not dependencies_optional[dependency_id]:
+                    raise ImportError(broken_dependencies_error)
+            else:
+                if dependency_module.__file__ != dependency_module_system_path:
+                    assert dependency_module.__file__ is not None
+                    non_system_wide_dependencies[dependency_id] = {
+                        "expected": dependency_module_system_path,
+                        "actual": dependency_module.__file__
+                    }
 
-    if backend_name == "dolfin":
-        backend_dependencies = {
-            "dijitso": "/usr/lib/python3/dist-packages/dijitso/__init__.py",
-            "ffc": "/usr/lib/python3/dist-packages/ffc/__init__.py",
-            "FIAT": "/usr/lib/python3/dist-packages/FIAT/__init__.py",
-            "ufl_legacy": "/usr/lib/python3/dist-packages/ufl_legacy/__init__.py"
-        }
-        # Add ufl too, if dolfin and dolfinx are installed simultaneously, since users
-        # typically end up manually installing it because downstream dependencies have not updated yet
-        # their codebase to use ufl_legacy instead of ufl
-        try:
-            __import__("ufl")
-        except ImportError:
-            pass
-        else:
-            backend_dependencies.update({
-                "ufl": "/usr/lib/python3/dist-packages/ufl/__init__.py",
-            })
-        fenics_name = "FEniCS"
-    elif backend_name == "dolfinx":
-        backend_dependencies = {
-            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
-            "ffcx": "/usr/lib/python3/dist-packages/ffcx/__init__.py",
-            "ufl": "/usr/lib/python3/dist-packages/ufl/__init__.py"
-        }
-        fenics_name = "FEniCSx"
-    else:
-        raise RuntimeError("This case was never supposed to happen." + CONTACT_ON_ERROR)
+        if any([isinstance(dependency_info, dict) for dependency_info in non_system_wide_dependencies]):
+            non_system_wide_dependencies_error = (
+                f"The following {fenics_name} dependencies were imported from a local path, "
+                "rather than the system wide one:\n"
+            )
+            for (dependency_id, dependency_info) in enumerate(non_system_wide_dependencies):
+                if isinstance(dependency_info, dict):
+                    non_system_wide_dependencies_error += (
+                        f"* {dependencies_import_name[dependency_id]}: expected in {dependency_info['expected']}, "
+                        f"but imported from {dependency_info['actual']}.\n"
+                    )
 
-    non_system_wide_dependencies = dict()
-    for dependency_name, dependency_module_system_path in backend_dependencies.items():
-        dependency_module = __import__(dependency_name)
-        if dependency_module.__file__ != dependency_module_system_path:
-            assert dependency_module.__file__ is not None
-            non_system_wide_dependencies[dependency_name] = {
-                "expected": dependency_module_system_path,
-                "actual": dependency_module.__file__
-            }
-
-    dependencies_to_pypi_name = {
-        "basix": "fenics-basix",
-        "dijitso": "fenics-dijitso",
-        "ffc": "fenics-ffc",
-        "ffcx": "fenics-ffcx",
-        "FIAT": "fenics-fiat",
-        "ufl": "fenics-ufl",
-        "ufl_legacy": "fenics-ufl-legacy"
-    }
-    if len(non_system_wide_dependencies):
-        non_system_wide_dependencies_error = (
-            f"The following {backend_name} dependencies were imported from a local path, "
-            "rather than the system wide one:\n"
-        )
-        for dependency_name, dependency_info in non_system_wide_dependencies.items():
+            non_system_wide_dependencies_error += "\n"
             non_system_wide_dependencies_error += (
-                f"* {dependency_name}: expected in {dependency_info['expected']}, "
-                f"but imported from {dependency_info['actual']}\n"
+                f"This typically happens when manually pip install-ing core {fenics_name} components, "
+                "which end up replacing the system wide installation provided by apt install.\n"
+                f"Please remove manually pip install-ed {fenics_name} components as follows:\n"
+            )
+            for (dependency_id, dependency_info) in enumerate(non_system_wide_dependencies):
+                if isinstance(dependency_info, dict):
+                    non_system_wide_dependencies_error += (
+                        f"* run 'pip uninstall {dependencies_pypi_name[dependency_id]}' in a terminal, "
+                        "and verify that you are prompted to confirm removal of files in "
+                        f"{os.path.dirname(dependency_info['actual'])}."
+                        f"{dependencies_extra_error_message[dependency_id]}\n"
+                    )
+
+            non_system_wide_dependencies_error += "\n"
+            non_system_wide_dependencies_error += (
+                f"If you are sure that you want to use manually pip install-ed core {fenics_name} components "
+                "instead of system wide ones, you can disable this check by exporting the "
+                f"{skip_deb_consistency_check_env_name} environment variable. Note, however, that this may "
+                "break the system wide installation.\n"
+            )
+            non_system_wide_dependencies_error += (
+                "If you believe that this message appears incorrectly, "
+                "report this on https://fenicsproject.discourse.group/ ."
             )
 
-        non_system_wide_dependencies_error += "\n"
-        non_system_wide_dependencies_error += (
-            f"This typically happens when manually pip install-ing core {fenics_name} components, "
-            "which end up replacing the system wide installation provided by apt install.\n"
-            f"Please remove manually pip install-ed {fenics_name} components as follows:\n"
-        )
-        for dependency_name, dependency_info in non_system_wide_dependencies.items():
-            non_system_wide_dependencies_error += (
-                f"* run 'pip uninstall {dependencies_to_pypi_name[dependency_name]}' in a terminal, "
-                "and verify that you are prompted to confirm removal of files in "
-                f"{os.path.dirname(dependency_info['actual'])}\n"
-            )
-
-        non_system_wide_dependencies_error += "\n"
-        non_system_wide_dependencies_error += (
-            f"If you are sure that you want to use manually pip install-ed core {fenics_name} components "
-            "instead of system wide ones, you can disable this check by exporting the "
-            "FENICS_SKIP_DEB_CONSISTENCY_CHECK environment variable. Note, however, that this may "
-            "break the system wide installation.\n"
-        )
-        non_system_wide_dependencies_error += (
-            "If you believe that this message appears incorrectly, "
-            "report this on https://fenicsproject.discourse.group/ ."
-        )
-
-        raise ImportError(non_system_wide_dependencies_error)
+            raise ImportError(non_system_wide_dependencies_error)

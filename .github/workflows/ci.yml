@@ -92,7 +92,7 @@ jobs:
             echo "On ${BACKEND}"
             export BACKEND
             pushd $(python3 -c "import ${BACKEND}, os; print(os.path.dirname(${BACKEND}.__file__))")
-            patch -p 2 < ${REPO_DIR}/python3-${BACKEND}/patches/patch_${BACKEND}_init.patch
+            patch -p 3 < ${REPO_DIR}/python3-${BACKEND}/patches/patch_${BACKEND}_init.patch
             cp -L ${REPO_DIR}/python3-${BACKEND}/patches/_deb_consistency_check.py .
             popd
             unset BACKEND
