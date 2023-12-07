@@ -63,21 +63,21 @@ jobs:
         run: |
           python3 -c "import dolfinx" 2> /dev/null && HAS_FENICSX="true" || HAS_FENICSX="false"
           echo "has_fenicsx=${HAS_FENICSX}" >> ${GITHUB_OUTPUT}
-      - name: Patch backends with the proposed changes
+      - name: Patch backends
         run: |
           export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
           export HAS_FENICSX=${{ steps.has_fenicsx.outputs.has_fenicsx }}
           REPO_DIR=${PWD}
           if [[ "${HAS_FENICS}" == "true" ]]; then
             pushd $(python3 -c "import dolfin, os; print(os.path.dirname(dolfin.__file__))")
-            patch -p 2 < ${REPO_DIR}/proposal/patch_dolfin_init.patch
-            cp ${REPO_DIR}/proposal/_deb_consistency_check.py .
+            patch -p 2 < ${REPO_DIR}/patches/patch_dolfin_init.patch
+            cp ${REPO_DIR}/patches/_deb_consistency_check.py .
             popd
           fi
           if [[ "${HAS_FENICSX}" == "true" ]]; then
             pushd $(python3 -c "import dolfinx, os; print(os.path.dirname(dolfinx.__file__))")
-            patch -p 2 < ${REPO_DIR}/proposal/patch_dolfinx_init.patch
-            cp ${REPO_DIR}/proposal/_deb_consistency_check.py .
+            patch -p 2 < ${REPO_DIR}/patches/patch_dolfinx_init.patch
+            cp ${REPO_DIR}/patches/_deb_consistency_check.py .
             popd
           fi
         shell: bash

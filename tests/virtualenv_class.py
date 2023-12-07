@@ -1,6 +1,6 @@
 # Copyright (C) PyScaffold contributors, Francesco Ballarin, Drew Parsons
 #
-# This file is part of a proposal for FEniCS/FEniCSx debian packaging.
+# This file is part of a consistency check between FEniCS/FEniCSx debian packages and local environment.
 #
 # SPDX-License-Identifier: MIT
 """Helper class to create a virtual environment.

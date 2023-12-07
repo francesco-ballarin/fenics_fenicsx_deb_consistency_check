@@ -1,9 +1,9 @@
 # Copyright (C) 2023 Francesco Ballarin, Drew Parsons
 #
-# This file is part of a proposal for FEniCS/FEniCSx debian packaging.
+# This file is part of a consistency check between FEniCS/FEniCSx debian packages and local environment.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
-"""Test proposed patches."""
+"""Test patches."""
 
 import sys
 import typing
