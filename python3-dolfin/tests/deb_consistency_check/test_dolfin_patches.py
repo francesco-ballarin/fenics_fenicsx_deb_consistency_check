@@ -26,7 +26,7 @@ def test_dolfin_import_success_without_local_packages() -> None:
     (["ufl_legacy"], ["fenics-ufl-legacy"], []),
     (["ufl"], ["fenics-ufl"], [UFL_LEGACY_WARNING]),
     (["FIAT", "ufl_legacy"], ["fenics-fiat", "fenics-ufl-legacy"], []),
-    (["ufl", "ufl_legacy"], ["fenics-ufl", "fenics-ufl-legacy"], [])
+    (["ufl", "ufl_legacy"], ["fenics-ufl", "fenics-ufl-legacy"], [UFL_LEGACY_WARNING])
 ])
 def test_dolfin_import_errors_with_local_packages(
     dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
