@@ -27,6 +27,9 @@ jobs:
               apt install -y -qq fenicsx
       fail-fast: false
     container: debian:testing
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - name: Install apt dependencies
@@ -35,66 +38,76 @@ jobs:
           apt -y -q update
           apt install -y -qq git python3-pip python3-virtualenv
           rm /usr/lib/python3.11/EXTERNALLY-MANAGED
-      - name: Install pip dependencies
-        run: |
-          python3 -m pip -q install -r tests/requirements.txt
-      - name: Run ruff
-        run: |
-          python3 -m ruff .
-      - name: Run isort
-        run: |
-          python3 -m isort --check --diff .
-      - name: Run mypy
-        run: |
-          python3 -m mypy .
-      - name: Run yamllint
-        run: |
-          python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
       - name: Install backends
         run: |
           ${{ matrix.setup_backends }}
-      - name: Determine if FEniCS is installed
-        id: has_fenics
+      - name: Install pip dependencies
+        run: |
+          python3 -m pip -q install -r requirements.txt
+      - name: Determine which backends are installed
         run: |
           python3 -c "import dolfin" 2> /dev/null && HAS_FENICS="true" || HAS_FENICS="false"
-          echo "has_fenics=${HAS_FENICS}" >> ${GITHUB_OUTPUT}
-      - name: Determine if FEniCSx is installed
-        id: has_fenicsx
-        run: |
           python3 -c "import dolfinx" 2> /dev/null && HAS_FENICSX="true" || HAS_FENICSX="false"
-          echo "has_fenicsx=${HAS_FENICSX}" >> ${GITHUB_OUTPUT}
+          echo "HAS_FENICS=${HAS_FENICS}"
+          echo "HAS_FENICSX=${HAS_FENICSX}"
+          if [[ "${HAS_FENICS}" == "true" && "${HAS_FENICSX}" == "true" ]]; then
+            echo "BACKENDS_STR=dolfin dolfinx" >> ${GITHUB_ENV}
+          elif [[ "${HAS_FENICS}" == "true" ]]; then
+            echo "BACKENDS_STR=dolfin" >> ${GITHUB_ENV}
+          elif [[ "${HAS_FENICSX}" == "true" ]]; then
+            echo "BACKENDS_STR=dolfinx" >> ${GITHUB_ENV}
+          else
+            echo "This case was never supposed to happen."
+            false
+          fi
+      - name: Run ruff
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -m ruff python3-${BACKEND}
+          done
+      - name: Run isort
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -m isort --check --diff python3-${BACKEND}
+          done
+      - name: Run mypy
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -m mypy python3-${BACKEND}
+          done
+      - name: Run yamllint
+        run: |
+          python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
       - name: Patch backends
         run: |
-          export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
-          export HAS_FENICSX=${{ steps.has_fenicsx.outputs.has_fenicsx }}
+          BACKENDS=(${BACKENDS_STR})
           REPO_DIR=${PWD}
-          if [[ "${HAS_FENICS}" == "true" ]]; then
-            pushd $(python3 -c "import dolfin, os; print(os.path.dirname(dolfin.__file__))")
-            patch -p 2 < ${REPO_DIR}/patches/patch_dolfin_init.patch
-            cp ${REPO_DIR}/patches/_deb_consistency_check.py .
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            export BACKEND
+            pushd $(python3 -c "import ${BACKEND}, os; print(os.path.dirname(${BACKEND}.__file__))")
+            patch -p 2 < ${REPO_DIR}/python3-${BACKEND}/patches/patch_${BACKEND}_init.patch
+            cp -L ${REPO_DIR}/python3-${BACKEND}/patches/_deb_consistency_check.py .
             popd
-          fi
-          if [[ "${HAS_FENICSX}" == "true" ]]; then
-            pushd $(python3 -c "import dolfinx, os; print(os.path.dirname(dolfinx.__file__))")
-            patch -p 2 < ${REPO_DIR}/patches/patch_dolfinx_init.patch
-            cp ${REPO_DIR}/patches/_deb_consistency_check.py .
-            popd
-          fi
-        shell: bash
+            unset BACKEND
+          done
       - name: Verify that patched backends still import correctly
         run: |
-          export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
-          export HAS_FENICSX=${{ steps.has_fenicsx.outputs.has_fenicsx }}
-          if [[ "${HAS_FENICS}" == "true" ]]; then
-            python3 -c "import dolfin"
-          fi
-          if [[ "${HAS_FENICSX}" == "true" ]]; then
-            python3 -c "import dolfinx"
-          fi
-        shell: bash
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -c "import ${BACKEND}"
+          done
       - name: Run tests
         run: |
-          export HAS_FENICS=${{ steps.has_fenics.outputs.has_fenics }}
-          export HAS_FENICSX=${{ steps.has_fenicsx.outputs.has_fenicsx }}
-          echo "Running tests for HAS_FENICS=${HAS_FENICS} and HAS_FENICSX=${HAS_FENICSX}"
-          pytest -svv tests
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            pytest -svv python3-${BACKEND}/tests
+          done
