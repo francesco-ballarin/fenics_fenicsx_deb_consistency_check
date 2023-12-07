@@ -36,14 +36,13 @@ jobs:
         run: |
           export DEBIAN_FRONTEND="noninteractive"
           apt -y -q update
-          apt install -y -qq git python3-pip python3-virtualenv
-          rm /usr/lib/python3.11/EXTERNALLY-MANAGED
+          apt install -y -qq python3-pip python3-virtualenv
       - name: Install backends
         run: |
           ${{ matrix.setup_backends }}
       - name: Install pip dependencies
         run: |
-          python3 -m pip -q install -r requirements.txt
+          python3 -m pip -q install --break-system-packages -r requirements.txt
       - name: Determine which backends are installed
         run: |
           python3 -c "import dolfin" 2> /dev/null && HAS_FENICS="true" || HAS_FENICS="false"
