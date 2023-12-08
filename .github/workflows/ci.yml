@@ -61,7 +61,9 @@ jobs:
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
       - name: Run tests
         run: |
-          python3 -m coverage run --source=pusimp -m pytest tests/unit
+          COVERAGE_FILE=.coverage_data python3 -m coverage run --source=pusimp -m pytest tests/data
+          COVERAGE_FILE=.coverage_unit python3 -m coverage run --source=pusimp -m pytest tests/unit
       - name: Check test coverage
         run: |
+          python3 -m coverage combine .coverage*
           python3 -m coverage report --show-missing --skip-covered

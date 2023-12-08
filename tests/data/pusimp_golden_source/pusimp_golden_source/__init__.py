@@ -11,5 +11,5 @@ The goal of this package is to provide a mock system path, a mock contact URL, a
 import os
 
 contact_url = "mock contact URL"
-system_path = os.path.dirname(__file__)
+system_path = os.path.dirname(os.path.dirname(__file__))
 system_package_manager = "mock system package manager"

@@ -77,7 +77,8 @@ def prevent_user_site_imports(
             )
             if not os.path.exists(dependency_module_expected_path) and not dependencies_optional[dependency_id]:
                 raise ImportError(
-                    broken_dependencies_error.replace("MISSING_OR_BROKEN", "missing"))
+                    broken_dependencies_error.replace(
+                        "MISSING_OR_BROKEN", f"missing. Its expected path was {dependency_module_expected_path}"))
             try:
                 dependency_module = importlib.import_module(dependency_import_name)
             except ImportError as dependency_module_import_error:
