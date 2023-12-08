@@ -1,5 +1,63 @@
+[build-system]
+requires = ["setuptools>=62", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prevent_user_site_imports"
+version = "0.0.dev1"
+authors = [
+    {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
+    {name = "Drew Parsons", email = "dparsons@debian.org"},
+]
+maintainers = [
+    {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
+    {name = "Drew Parsons", email = "dparsons@debian.org"},
+]
+description = "Prevent user-site imports"
+license = {file = "LICENSE"}
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = []
+
+[project.urls]
+repository = "https://github.com/francesco-ballarin/prevent_user_site_imports"
+issues = "https://github.com/francesco-ballarin/prevent_user_site_imports/issues"
+
+[project.optional-dependencies]
+lint = [
+    "isort",
+    "mypy",
+    "ruff",
+    "yamllint"
+]
+tests = [
+    "coverage[toml]",
+    "pip",
+    "pytest",
+    "virtualenv"
+]
+
 [tool.isort]
 line_length = 120
+multi_line_output = 4
+order_by_type = false
 
 [tool.mypy]
 check_untyped_defs = true

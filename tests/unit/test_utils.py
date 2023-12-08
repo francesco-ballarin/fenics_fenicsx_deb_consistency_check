@@ -1,28 +1,31 @@
 # Copyright (C) 2023 Francesco Ballarin, Drew Parsons
 #
-# This file is part of a consistency check between FEniCS/FEniCSx debian packages and local environment.
+# This file is part of a simple library to prevent user-site imports on a specific set of dependencies.
 #
-# SPDX-License-Identifier: LGPL-3.0-or-later
-"""Test fixtures defined in conftest."""
+# SPDX-License-Identifier: MIT
+"""Test utility functions defined in prevent_user_site_imports.utils."""
 
 import sys
 
-from utils import VirtualEnv, assert_package_import_error, assert_package_location, get_package_main_file, has_package
+import pytest
+
+from prevent_user_site_imports.utils import (
+    assert_package_import_error, assert_package_location, get_package_main_file, has_package, VirtualEnv)
 
 
-def test_has_numpy() -> None:
+def test_has_package() -> None:
     """Test has_package with a package that is surely installed."""
-    assert has_package(sys.executable, "numpy")
+    assert has_package(sys.executable, "pytest", True)
 
 
-def test_get_numpy_main_file() -> None:
+def test_get_package_main_file() -> None:
     """Test get_package_main_file with a package that is surely installed."""
-    assert get_package_main_file(sys.executable, "numpy") == "/usr/lib/python3/dist-packages/numpy/__init__.py"
+    assert get_package_main_file(sys.executable, "pytest") == pytest.__file__
 
 
-def test_assert_numpy_location() -> None:
+def test_assert_package_location() -> None:
     """Test assert_package_location with a package that is surely installed."""
-    assert_package_location(sys.executable, "numpy", "/usr/lib/python3/dist-packages/numpy/__init__.py")
+    assert_package_location(sys.executable, "pytest", pytest.__file__)
 
 
 def test_assert_package_import_error() -> None:
@@ -49,8 +52,8 @@ def test_install_package_in_virtual_env() -> None:
 
 
 def test_break_package_in_virtual_env() -> None:
-    """Test breaking a system wide package by a mock installation in a virtual environment."""
+    """Test breaking an existing package by a mock installation in a virtual environment."""
     virtual_env = VirtualEnv()
-    virtual_env.break_package("numpy")
-    assert_package_import_error(virtual_env.executable, "numpy", ["numpy was purposely broken."])
-    assert_package_location(sys.executable, "numpy", "/usr/lib/python3/dist-packages/numpy/__init__.py")
+    virtual_env.break_package("pytest")
+    assert_package_import_error(virtual_env.executable, "pytest", ["pytest was purposely broken."])
+    assert_package_location(sys.executable, "pytest", pytest.__file__)

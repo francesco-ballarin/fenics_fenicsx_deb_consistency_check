@@ -1,0 +1,118 @@
+name: FEniCS/FEniCSx patches
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - backend: dolfin-only
+            setup_backends: |
+              apt install -y -qq fenics
+          - backend: dolfinx-only
+            setup_backends: |
+              apt install -y -qq fenicsx
+          - backend: dolfin-and-dolfinx
+            setup_backends: |
+              apt install -y -qq fenics
+              apt install -y -qq fenicsx
+      fail-fast: false
+    container: debian:testing
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Install git
+        run: |
+          apt update -y -q
+          apt install -y -qq git
+      - name: Mark workspace as safe
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+      - uses: actions/checkout@v4
+      - name: Install apt dependencies
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt -y -q update
+          apt install -y -qq python3-pip python3-virtualenv
+      - name: Install backends
+        run: |
+          ${{ matrix.setup_backends }}
+      - name: Install prevent_user_site_imports
+        run: |
+          python3 -m pip install --break-system-packages .[lint,tests]
+      - name: Clean build files
+        run: |
+          git clean -xdf
+      - name: Determine which backends are installed
+        run: |
+          python3 -c "import dolfin" 2> /dev/null && HAS_FENICS="true" || HAS_FENICS="false"
+          python3 -c "import dolfinx" 2> /dev/null && HAS_FENICSX="true" || HAS_FENICSX="false"
+          echo "HAS_FENICS=${HAS_FENICS}"
+          echo "HAS_FENICSX=${HAS_FENICSX}"
+          if [[ "${HAS_FENICS}" == "true" && "${HAS_FENICSX}" == "true" ]]; then
+            echo "BACKENDS_STR=dolfin dolfinx" >> ${GITHUB_ENV}
+          elif [[ "${HAS_FENICS}" == "true" ]]; then
+            echo "BACKENDS_STR=dolfin" >> ${GITHUB_ENV}
+          elif [[ "${HAS_FENICSX}" == "true" ]]; then
+            echo "BACKENDS_STR=dolfinx" >> ${GITHUB_ENV}
+          else
+            echo "This case was never supposed to happen."
+            false
+          fi
+      - name: Run ruff
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -m ruff python3-${BACKEND}
+          done
+      - name: Run isort
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -m isort --check --diff python3-${BACKEND}
+          done
+      - name: Run mypy
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -m mypy python3-${BACKEND}
+          done
+      - name: Patch backends
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          REPO_DIR=${PWD}
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            export BACKEND
+            pushd $(python3 -c "import ${BACKEND}, os; print(os.path.dirname(${BACKEND}.__file__))")
+            patch -p 3 < ${REPO_DIR}/python3-${BACKEND}/patches/patch_${BACKEND}_init.patch
+            popd
+            unset BACKEND
+          done
+      - name: Verify that patched backends still import correctly
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            python3 -c "import ${BACKEND}"
+          done
+      - name: Run tests
+        run: |
+          BACKENDS=(${BACKENDS_STR})
+          for BACKEND in "${BACKENDS[@]}"; do
+            echo "On ${BACKEND}"
+            pytest -svv python3-${BACKEND}/tests/unit
+          done

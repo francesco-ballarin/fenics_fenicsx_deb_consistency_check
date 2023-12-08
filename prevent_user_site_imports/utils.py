@@ -1,9 +1,13 @@
 # Copyright (C) 2023 Francesco Ballarin, Drew Parsons
 #
-# This file is part of a consistency check between FEniCS/FEniCSx debian packages and local environment.
+# This file is part of a simple library to prevent user-site imports on a specific set of dependencies.
 #
-# SPDX-License-Identifier: LGPL-3.0-or-later
-"""Definition of fixtures used by more than one file."""
+# SPDX-License-Identifier: MIT
+"""Utility functions used while testing the package.
+
+Note that this file does not get automatically imported in __init__.py to avoid having a runtime dependency
+on pytest and virtualenv.
+"""
 
 
 import os
@@ -11,13 +15,14 @@ import pathlib
 import subprocess
 import sys
 import tempfile
+import types
 import typing
 
 import pytest
 import virtualenv
 
 
-def has_package(executable: str, package: str) -> bool:
+def has_package(executable: str, package: str, verbose_on_failure: bool = False) -> bool:
     """Return if package is installed.
 
     Note that it is not safe to simply import the package in the current pytest environment,
@@ -28,11 +33,10 @@ def has_package(executable: str, package: str) -> bool:
     if run_import.returncode == 0:
         return True
     else:
-        """
-        print(f"Importing {package} was not successful.\n"
-              f"stdout contains {run_import.stdout.decode().strip()}\n"
-              f"stderr contains {run_import.stderr.decode().strip()}\n")
-        """
+        if verbose_on_failure:
+            print(f"Importing {package} was not successful.\n"
+                  f"stdout contains {run_import.stdout.decode().strip()}\n"
+                  f"stderr contains {run_import.stderr.decode().strip()}\n")
         return False
 
 
@@ -49,10 +53,10 @@ def get_package_main_file(executable: str, package: str) -> str:
             f"stderr contains {run_import_file.stderr.decode().strip()}\n")
 
 
-def assert_package_location(executable: str, package: str, path: str) -> None:
+def assert_package_location(executable: str, package: str, package_path: str) -> None:
     """Assert that a package imports from the expected location."""
-    assert has_package(executable, package)
-    assert get_package_main_file(executable, package) == path
+    assert has_package(executable, package, True)
+    assert get_package_main_file(executable, package) == package_path
 
 
 def assert_package_import_error(executable: str, package: str, expected: typing.List[str]) -> None:
@@ -68,16 +72,16 @@ def assert_package_import_error(executable: str, package: str, expected: typing.
         )
 
 
-def assert_backend_import_success_without_local_packages(backend: str) -> None:
-    """Assert that the backend imports correctly without any extra local packages."""
-    assert_package_location(sys.executable, backend, f"/usr/lib/petsc/lib/python3/dist-packages/{backend}/__init__.py")
+def assert_package_import_success_without_local_packages(package: str, package_path: str) -> None:
+    """Assert that the package imports correctly without any extra local packages."""
+    assert_package_location(sys.executable, package, package_path)
 
 
-def assert_backend_import_errors_with_local_packages(
-    backend: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
+def assert_package_import_errors_with_local_packages(
+    package: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
     dependencies_extra_error_message: typing.List[str]
 ) -> None:
-    """Assert that the backend fails to import with extra local packages."""
+    """Assert that a package fails to import with extra local packages."""
     virtual_env = VirtualEnv()
     for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
         virtual_env.install_package(dependency_pypi_name)
@@ -93,13 +97,49 @@ def assert_backend_import_errors_with_local_packages(
         f"* run 'pip uninstall {dependency_pypi_name}' in" for dependency_pypi_name in dependencies_pypi_name
     )
     dependencies_error_messages.extend(dependencies_extra_error_message)
-    assert_package_import_error(virtual_env.executable, backend, dependencies_error_messages)
+    assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
 
 
-def assert_backend_import_errors_with_broken_packages(
-    backend: str, dependencies_import_name: typing.List[str], dependencies_apt_name: typing.List[str],
+class TemporarilyEnableEnvironmentVariable(object):
+    """Temporarily enable an environment variable in a test."""
+
+    def __init__(self, variable_name: str) -> None:
+        self._variable_name = variable_name
+
+    def __enter__(self) -> None:
+        """Temporarily set the environment variable."""
+        assert self._variable_name not in os.environ
+        os.environ[self._variable_name] = "enabled"
+
+    def __exit__(
+        self, exception_type: typing.Optional[typing.Type[BaseException]],
+        exception_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType]
+    ) -> None:
+        """Unse the enviornment variable."""
+        del os.environ[self._variable_name]
+
+
+def assert_package_import_success_with_allowed_local_packages(
+    package: str, package_path: str, dependencies_import_name: typing.List[str],
+    dependencies_pypi_name: typing.List[str]
 ) -> None:
-    """Assert that the backend imports correctly when optional packages are broken."""
+    """Assert that a package imports correctly even with extra local packages when asked to allow user-site imports."""
+    virtual_env = VirtualEnv()
+    for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
+        virtual_env.install_package(dependency_pypi_name)
+        assert_package_location(
+            virtual_env.executable, dependency_import_name,
+            str(virtual_env.dist_path / dependency_import_name / "__init__.py")
+        )
+    with TemporarilyEnableEnvironmentVariable(f"{package}_allow_user_site_imports".upper()):
+        assert_package_location(virtual_env.executable, package, package_path)
+
+
+def assert_package_import_errors_with_broken_non_optional_packages(
+    package: str, dependencies_import_name: typing.List[str], dependencies_apt_name: typing.List[str],
+) -> None:
+    """Assert that a package fails to import when non-optional packages are broken."""
     virtual_env = VirtualEnv()
     for dependency_import_name in dependencies_import_name:
         virtual_env.break_package(dependency_import_name)
@@ -113,23 +153,20 @@ def assert_backend_import_errors_with_broken_packages(
     dependencies_error_messages.extend(
         f"fix it with 'apt install --reinstall {dependency_apt_name}'" for dependency_apt_name in dependencies_apt_name
     )
-    assert_package_import_error(virtual_env.executable, backend, dependencies_error_messages)
+    assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
 
 
-def assert_backend_import_success_with_optional_packages(
-    backend: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str]
+def assert_package_import_success_with_broken_optional_packages(
+    package: str, package_path: str, dependencies_import_name: typing.List[str]
 ) -> None:
-    """Assert that the backend fails to import with extra local packages."""
+    """Assert that a package imports correctly when optional packages are broken."""
     virtual_env = VirtualEnv()
-    for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
-        virtual_env.install_package(dependency_pypi_name)
-        assert_package_location(
-            virtual_env.executable, dependency_import_name,
-            str(virtual_env.dist_path / dependency_import_name / "__init__.py")
+    for dependency_import_name in dependencies_import_name:
+        virtual_env.break_package(dependency_import_name)
+        assert_package_import_error(
+            virtual_env.executable, dependency_import_name, [f"{dependency_import_name} was purposely broken."]
         )
-    assert_package_location(
-        virtual_env.executable, backend, f"/usr/lib/petsc/lib/python3/dist-packages/{backend}/__init__.py"
-    )
+    assert_package_location(virtual_env.executable, package, package_path)
 
 
 class VirtualEnv(object):

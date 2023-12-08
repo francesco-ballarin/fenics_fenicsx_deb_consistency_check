@@ -2,13 +2,14 @@ diff --git a/python/dolfin/__init__.py b/python/dolfin/__init__.py
 index fcb52d131..f436ba028 100644
 --- a/python/dolfin/__init__.py
 +++ b/python/dolfin/__init__.py
-@@ -30,6 +30,20 @@ del sys
+@@ -30,6 +30,21 @@ del sys
  # sys.setdlopenflags(stored_dlopen_flags)
  # del sys
  
-+from ._deb_consistency_check import _deb_consistency_check
-+_deb_consistency_check(
-+    "FEniCS",
++import prevent_user_site_imports
++prevent_user_site_imports.check(
++    "dolfin", "https://fenicsproject.discourse.group/",
++    "/usr/lib/python3/dist-packages",
 +    ["dijitso", "ffc", "FIAT", "ufl_legacy", "ufl"],
 +    ["python3-dijitso", "python3-ffc", "python3-fiat", "python3-ufl-legacy", "python3-ufl"],
 +    ["fenics-dijitso", "fenics-ffc", "fenics-fiat", "fenics-ufl-legacy", "fenics-ufl"],
@@ -18,7 +19,7 @@ index fcb52d131..f436ba028 100644
 +        "see https://fenicsproject.discourse.group/t/announcement-ufl-legacy-and-legacy-dolfin/11583 ."
 +    )]
 +)
-+del _deb_consistency_check
++del prevent_user_site_imports
 +
  # Import cpp modules
  from .cpp import __version__
