@@ -20,7 +20,45 @@ def prevent_user_site_imports(
     dependencies_optional: typing.List[bool],
     dependencies_extra_error_message: typing.List[str]
 ) -> None:
-    """Prevent user-site imports on a specific set of dependencies."""
+    """
+    Prevent user-site imports on a specific set of dependencies.
+
+    Parameters
+    ----------
+    package_name
+        The name of the package which dependencies must be guarded against user-site imports.
+        This information is only employed to prepare the text of error messages.
+    system_manager
+        The name of the system manager with which the package was installed.
+        This information is only employed to prepare the text of error messages.
+    contact_url
+        The contact URL for the package development.
+        This information is only employed to prepare the text of error messages.
+    dependencies_expected_prefix
+        The expected prefix of import locations managed by the system manager.
+        This information is employed while determining the import location of each dependency
+        and to prepare the text of error messages.
+    dependencies_import_name
+        The import name of the dependencies of the package.
+        This information is employed while determining the import location of each dependency
+        and to prepare the text of error messages.
+    dependencies_pypi_name
+        The pypi name of the dependencies of the package.
+        This information is only employed to prepare the text of error messages.
+    dependencies_optional
+        A list of bools reporting whether each dependence is optional or mandatory.
+        This information is employed while determining the import location of each dependency
+        and to prepare the text of error messages.
+    dependencies_extra_error_message
+        Additional text, corresponding to each dependency, to be added in the error message.
+        This information is only employed to prepare the text of error messages.
+
+    Raises
+    ------
+    ImportError
+        If at least a dependency is imported from user-site, or if at least a mandatory dependency
+        is broken or missing.
+    """
     assert len(dependencies_import_name) == len(dependencies_pypi_name)
     assert len(dependencies_import_name) == len(dependencies_optional)
     assert len(dependencies_import_name) == len(dependencies_extra_error_message)
@@ -69,7 +107,7 @@ def prevent_user_site_imports(
             user_site_dependencies_error += "\n"
             user_site_dependencies_error += (
                 f"This typically happens when manually pip install-ing {package_name} dependencies, "
-                "which end up replacing the installation provided by {system_manager}.\n"
+                f"which end up replacing the installation provided by {system_manager}.\n"
                 f"Please remove manually pip install-ed {package_name} components as follows:\n"
             )
             for (dependency_id, dependency_info) in enumerate(user_site_dependencies):
@@ -84,9 +122,9 @@ def prevent_user_site_imports(
             user_site_dependencies_error += "\n"
             user_site_dependencies_error += (
                 f"If you are sure that you want to use manually pip install-ed {package_name} dependencies "
-                "instead of the ones provided by {system_manager}, you can disable this check by exporting the "
+                f"instead of the ones provided by {system_manager}, you can disable this check by exporting the "
                 f"{allow_user_site_imports_env_name} environment variable. Note, however, that this may "
-                "break the installation provided by {system_manager}.\n"
+                f"break the installation provided by {system_manager}.\n"
             )
             user_site_dependencies_error += (
                 "If you believe that this message appears incorrectly, "
