@@ -108,7 +108,7 @@ def assert_backend_import_errors_with_broken_packages(
         )
     dependencies_error_messages: typing.List[str] = []
     dependencies_error_messages.extend(
-        f"{dependency_import_name} is missing or broken" for dependency_import_name in dependencies_import_name
+        f"{dependency_import_name} is broken" for dependency_import_name in dependencies_import_name
     )
     dependencies_error_messages.extend(
         f"fix it with 'apt install --reinstall {dependency_apt_name}'" for dependency_apt_name in dependencies_apt_name

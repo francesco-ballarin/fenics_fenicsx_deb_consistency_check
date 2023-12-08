@@ -34,16 +34,24 @@ def _deb_consistency_check(
         for (dependency_id, dependency_import_name) in enumerate(dependencies_import_name):
             dependency_module_system_path = f"/usr/lib/python3/dist-packages/{dependency_import_name}/__init__.py"
             broken_dependencies_error = (
-                f"{dependency_import_name} is missing or broken. "
-                f"Please try to fix it with 'apt install --reinstall {dependencies_apt_name[dependency_id]}'."
+                f"{dependency_import_name} is MISSING_OR_BROKEN.\n"
+                f"Please try to fix it with 'APT_INSTALL {dependencies_apt_name[dependency_id]}'."
             )
             if not os.path.exists(dependency_module_system_path) and not dependencies_optional[dependency_id]:
-                raise ImportError(broken_dependencies_error)
+                raise ImportError(
+                    broken_dependencies_error.replace("MISSING_OR_BROKEN", "missing").replace(
+                        "APT_INSTALL", "apt install"))
             try:
                 dependency_module = importlib.import_module(dependency_import_name)
-            except ImportError:
+            except ImportError as dependency_module_import_error:
                 if not dependencies_optional[dependency_id]:
-                    raise ImportError(broken_dependencies_error)
+                    raise ImportError(
+                        broken_dependencies_error.replace(
+                            "MISSING_OR_BROKEN", f"broken. Error on import was '{dependency_module_import_error}'"
+                        ).replace(
+                            "APT_INSTALL", "apt install --reinstall"
+                        )
+                    )
             else:
                 if dependency_module.__file__ != dependency_module_system_path:
                     assert dependency_module.__file__ is not None
