@@ -42,13 +42,13 @@ issues = "https://github.com/francesco-ballarin/pusimp/issues"
 
 [project.optional-dependencies]
 data = [
-    "pusimp_dependency_one @ git+https://github.com/python-pusimp/pusimp.git#subdirectory=tests/data/pusimp_dependency_one",
-    "pusimp_dependency_two @ git+https://github.com/python-pusimp/pusimp.git#subdirectory=tests/data/pusimp_dependency_two",
-    "pusimp_dependency_three @ git+https://github.com/python-pusimp/pusimp.git#subdirectory=tests/data/pusimp_dependency_three",
-    "pusimp_golden_source @ git+https://github.com/python-pusimp/pusimp.git#subdirectory=tests/data/pusimp_golden_source",
-    "pusimp_package_one @ git+https://github.com/python-pusimp/pusimp.git#subdirectory=tests/data/pusimp_package_one",
-    "pusimp_package_two @ git+https://github.com/python-pusimp/pusimp.git#subdirectory=tests/data/pusimp_package_two",
-    "pusimp_package_three @ git+https://github.com/python-pusimp/pusimp.git#subdirectory=tests/data/pusimp_package_three"
+    "pusimp_dependency_one @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_one",
+    "pusimp_dependency_two @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_two",
+    "pusimp_dependency_three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_three",
+    "pusimp_golden_source @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_golden_source",
+    "pusimp_package_one @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_one",
+    "pusimp_package_two @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_two",
+    "pusimp_package_three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_three"
 ]
 lint = [
     "isort",
