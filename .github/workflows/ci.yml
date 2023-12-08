@@ -29,7 +29,7 @@ jobs:
           apt install -y -qq python3-pip python3-virtualenv
       - name: Install pusimp
         run: |
-          python3 -m pip install --break-system-packages .[lint,tests]
+          python3 -m pip install --break-system-packages .[data,lint,tests]
       - name: Clean build files
         run: |
           git clean -xdf
