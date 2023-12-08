@@ -54,16 +54,13 @@ def test_dolfin_import_success_with_allowed_local_packages(
         dependencies_import_name, dependencies_pypi_name)
 
 
-@pytest.mark.parametrize("dependencies_import_name,dependencies_apt_name", [
-    # (["ufl_legacy"], ["python3-ufl-legacy"]),  # cannot use this: it breaks ffc/compiler.py (line 121) too
-    (["ffc"], ["python3-ffc"])
+@pytest.mark.parametrize("dependencies_import_name", [
+    # ["ufl_legacy"],  # cannot use this: it breaks ffc/compiler.py (line 121) too
+    ["ffc"]
 ])
-def test_dolfin_import_errors_with_broken_non_optional_packages(
-    dependencies_import_name: typing.List[str], dependencies_apt_name: typing.List[str],
-) -> None:
+def test_dolfin_import_errors_with_broken_non_optional_packages(dependencies_import_name: typing.List[str]) -> None:
     """Test that dolfin fails to import when non-optional packages are broken."""
-    assert_package_import_errors_with_broken_non_optional_packages(
-        "dolfin", dependencies_import_name, dependencies_apt_name)
+    assert_package_import_errors_with_broken_non_optional_packages("dolfin", dependencies_import_name)
 
 
 @pytest.mark.parametrize("dependencies_import_name", [

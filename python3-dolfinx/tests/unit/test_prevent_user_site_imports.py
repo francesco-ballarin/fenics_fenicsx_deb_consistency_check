@@ -49,13 +49,10 @@ def test_dolfinx_import_success_with_allowed_local_packages(
         dependencies_import_name, dependencies_pypi_name)
 
 
-@pytest.mark.parametrize("dependencies_import_name,dependencies_apt_name", [
-    (["ufl"], ["python3-ufl"]),
-    (["ffcx"], ["python3-ffcx"])
+@pytest.mark.parametrize("dependencies_import_name", [
+    ["ufl"],
+    ["ffcx"]
 ])
-def test_dolfinx_import_errors_with_broken_non_optional_packages(
-    dependencies_import_name: typing.List[str], dependencies_apt_name: typing.List[str],
-) -> None:
+def test_dolfinx_import_errors_with_broken_non_optional_packages(dependencies_import_name: typing.List[str]) -> None:
     """Test that dolfinx fails to import with broken local packages."""
-    assert_package_import_errors_with_broken_non_optional_packages(
-        "dolfinx", dependencies_import_name, dependencies_apt_name)
+    assert_package_import_errors_with_broken_non_optional_packages("dolfinx", dependencies_import_name)

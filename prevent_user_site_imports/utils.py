@@ -137,7 +137,7 @@ def assert_package_import_success_with_allowed_local_packages(
 
 
 def assert_package_import_errors_with_broken_non_optional_packages(
-    package: str, dependencies_import_name: typing.List[str], dependencies_apt_name: typing.List[str],
+    package: str, dependencies_import_name: typing.List[str]
 ) -> None:
     """Assert that a package fails to import when non-optional packages are broken."""
     virtual_env = VirtualEnv()
@@ -149,9 +149,6 @@ def assert_package_import_errors_with_broken_non_optional_packages(
     dependencies_error_messages: typing.List[str] = []
     dependencies_error_messages.extend(
         f"{dependency_import_name} is broken" for dependency_import_name in dependencies_import_name
-    )
-    dependencies_error_messages.extend(
-        f"fix it with 'apt install --reinstall {dependency_apt_name}'" for dependency_apt_name in dependencies_apt_name
     )
     assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
 
