@@ -19,7 +19,7 @@ pusimp.prevent_user_site_imports(
     ["pusimp_dependency_one", "pusimp_dependency_two", "pusimp_dependency_three"],
     ["pusimp_dependency_one", "pusimp_dependency_two", "pusimp_dependency_three"],
     [False, False, True],
-    ["", "", " pusimp_dependency_three is indeed an optional dependency."]
+    ["", "", "pusimp_dependency_three is indeed an optional dependency."]
 )
 
 import pusimp_dependency_one  # noqa: E402, F401

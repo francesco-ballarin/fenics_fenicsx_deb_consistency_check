@@ -77,7 +77,7 @@ def prevent_user_site_imports(
                     user_site_dependencies_error += (
                         f"* run 'pip uninstall {dependencies_pypi_name[dependency_id]}' in a terminal, "
                         "and verify that you are prompted to confirm removal of files in "
-                        f"{os.path.dirname(dependency_info['actual'])}."
+                        f"{os.path.dirname(dependency_info['actual'])}. "
                         f"{dependencies_extra_error_message[dependency_id]}\n"
                     )
 
