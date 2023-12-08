@@ -12,7 +12,22 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: debian:testing
+    strategy:
+      matrix:
+        include:
+          - name: debian
+            container: debian:testing
+            install_dependencies: |
+              export DEBIAN_FRONTEND="noninteractive"
+              apt -y -q update
+              apt install -y -qq python3-pip python3-virtualenv
+          - name: conda
+            container: continuumio/miniconda3
+            install_dependencies: |
+              conda install -y pip virtualenv
+      fail-fast: false
+    name: ${{ matrix.name }}
+    container: ${{ matrix.container }}
     steps:
       - name: Install git
         run: |
@@ -22,11 +37,10 @@ jobs:
         run: |
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - uses: actions/checkout@v4
-      - name: Install apt dependencies
+      - name: Install dependencies
         run: |
-          export DEBIAN_FRONTEND="noninteractive"
-          apt -y -q update
-          apt install -y -qq python3-pip python3-virtualenv
+          ${{ matrix.install_dependencies }}
+          which python3
       - name: Install pusimp
         run: |
           python3 -m pip install --break-system-packages .[data,lint,tests]
