@@ -1,6 +1,6 @@
-# Copyright (C) 2023 Francesco Ballarin, Drew Parsons
+# Copyright (C) 2023 by the pusimp authors
 #
-# This file is part of a consistency check between FEniCS debian packages and local environment.
+# This file is part of pusimp for FEniCS.
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
 """Test DOLFIN patches."""
@@ -9,7 +9,7 @@ import typing
 
 import pytest
 
-from prevent_user_site_imports.utils import (  # isort: skip
+from pusimp.utils import (  # isort: skip
     assert_package_import_errors_with_local_packages,
     assert_package_import_errors_with_broken_non_optional_packages,
     assert_package_import_success_with_allowed_local_packages,

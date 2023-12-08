@@ -3,7 +3,7 @@ requires = ["setuptools>=62", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prevent_user_site_imports"
+name = "pusimp"
 version = "0.0.dev1"
 authors = [
     {name = "Francesco Ballarin", email = "francesco.ballarin@unicatt.it"},
@@ -37,8 +37,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-repository = "https://github.com/francesco-ballarin/prevent_user_site_imports"
-issues = "https://github.com/francesco-ballarin/prevent_user_site_imports/issues"
+repository = "https://github.com/francesco-ballarin/pusimp"
+issues = "https://github.com/francesco-ballarin/pusimp/issues"
 
 [project.optional-dependencies]
 lint = [

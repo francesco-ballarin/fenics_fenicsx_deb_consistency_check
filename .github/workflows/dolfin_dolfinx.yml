@@ -47,7 +47,7 @@ jobs:
       - name: Install backends
         run: |
           ${{ matrix.setup_backends }}
-      - name: Install prevent_user_site_imports
+      - name: Install pusimp
         run: |
           python3 -m pip install --break-system-packages .[lint,tests]
       - name: Clean build files

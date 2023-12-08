@@ -1,15 +1,15 @@
-# Copyright (C) 2023 Francesco Ballarin, Drew Parsons
+# Copyright (C) 2023 by the pusimp authors
 #
-# This file is part of a simple library to prevent user-site imports on a specific set of dependencies.
+# This file is part of pusimp.
 #
 # SPDX-License-Identifier: MIT
-"""Test utility functions defined in prevent_user_site_imports.utils."""
+"""Test utility functions defined in pusimp.utils."""
 
 import sys
 
 import pytest
 
-from prevent_user_site_imports.utils import (
+from pusimp.utils import (
     assert_package_import_error, assert_package_location, get_package_main_file, has_package, VirtualEnv)
 
 

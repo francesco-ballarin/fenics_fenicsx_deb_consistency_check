@@ -27,7 +27,7 @@ jobs:
           export DEBIAN_FRONTEND="noninteractive"
           apt -y -q update
           apt install -y -qq python3-pip python3-virtualenv
-      - name: Install prevent_user_site_imports
+      - name: Install pusimp
         run: |
           python3 -m pip install --break-system-packages .[lint,tests]
       - name: Clean build files
@@ -47,7 +47,7 @@ jobs:
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
       - name: Run tests
         run: |
-          python3 -m coverage run --source=prevent_user_site_imports -m pytest tests/unit
+          python3 -m coverage run --source=pusimp -m pytest tests/unit
       - name: Check test coverage
         run: |
           python3 -m coverage report --show-missing --skip-covered

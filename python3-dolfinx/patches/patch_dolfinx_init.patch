@@ -5,9 +5,9 @@ index 52edc9c970..e859c3e5de 100644
 @@ -35,6 +35,17 @@ except ImportError:
      default_scalar_type = _np.float64
      default_real_type = _np.float64
- 
-+import prevent_user_site_imports
-+prevent_user_site_imports.check(
+
++import pusimp
++pusimp.prevent_user_site_imports(
 +    "dolfinx", "apt", "https://fenicsproject.discourse.group/",
 +    "/usr/lib/python3/dist-packages",
 +    ["basix", "ffcx", "ufl"],
@@ -15,7 +15,7 @@ index 52edc9c970..e859c3e5de 100644
 +    [False, False, False],
 +    ["", "", ""]
 +)
-+del prevent_user_site_imports
++del pusimp
 +
  from dolfinx import common
  from dolfinx import cpp as _cpp

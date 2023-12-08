@@ -1,6 +1,6 @@
-# Copyright (C) 2023 Francesco Ballarin, Drew Parsons
+# Copyright (C) 2023 by the pusimp authors
 #
-# This file is part of a simple library to prevent user-site imports on a specific set of dependencies.
+# This file is part of pusimp.
 #
 # SPDX-License-Identifier: MIT
 """Prevent user-site imports on a specific set of dependencies."""
@@ -10,7 +10,7 @@ import os
 import typing
 
 
-def check(
+def prevent_user_site_imports(
     package_name: str,
     system_manager: str,
     contact_url: str,

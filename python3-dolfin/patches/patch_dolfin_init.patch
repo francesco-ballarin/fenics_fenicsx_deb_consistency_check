@@ -5,9 +5,9 @@ index fcb52d131..f436ba028 100644
 @@ -30,6 +30,20 @@ del sys
  # sys.setdlopenflags(stored_dlopen_flags)
  # del sys
- 
-+import prevent_user_site_imports
-+prevent_user_site_imports.check(
+
++import pusimp
++pusimp.prevent_user_site_imports(
 +    "dolfin", "apt", "https://fenicsproject.discourse.group/",
 +    "/usr/lib/python3/dist-packages",
 +    ["dijitso", "ffc", "FIAT", "ufl_legacy", "ufl"],
@@ -18,8 +18,8 @@ index fcb52d131..f436ba028 100644
 +        "see https://fenicsproject.discourse.group/t/announcement-ufl-legacy-and-legacy-dolfin/11583 ."
 +    )]
 +)
-+del prevent_user_site_imports
++del pusimp
 +
  # Import cpp modules
  from .cpp import __version__
- 
+

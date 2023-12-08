@@ -1,6 +1,6 @@
-# Copyright (C) 2023 Francesco Ballarin, Drew Parsons
+# Copyright (C) 2023 by the pusimp authors
 #
-# This file is part of a simple library to prevent user-site imports on a specific set of dependencies.
+# This file is part of pusimp.
 #
 # SPDX-License-Identifier: MIT
 """Utility functions used while testing the package.
