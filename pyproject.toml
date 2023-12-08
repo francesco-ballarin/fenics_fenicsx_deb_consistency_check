@@ -84,3 +84,9 @@ max-doc-length = 120
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.setuptools.package-data]
+pusimp = ["py.typed"]
+
+[tool.setuptools.packages.find]
+namespaces = false

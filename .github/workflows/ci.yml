@@ -35,13 +35,13 @@ jobs:
           git clean -xdf
       - name: Run ruff
         run: |
-          python3 -m ruff --exclude python3-dolfin --exclude python3-dolfinx .
+          python3 -m ruff --exclude applications .
       - name: Run isort
         run: |
-          python3 -m isort --check --diff --skip-glob python3-dolfin --skip-glob python3-dolfinx .
+          python3 -m isort --check --diff --skip-glob applications .
       - name: Run mypy
         run: |
-          python3 -m mypy --exclude python3-dolfin --exclude python3-dolfinx .
+          python3 -m mypy --exclude applications .
       - name: Run yamllint
         run: |
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .
