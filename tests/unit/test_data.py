@@ -3,11 +3,7 @@
 # This file is part of pusimp.
 #
 # SPDX-License-Identifier: MIT
-"""Test that all mock packages in tests/data import correctly after installation.
-
-It is preferable not to run this file together with tests/unit, since the mock packages should
-be re-imported from scratch while carrying out unit tests.
-"""
+"""Test that all mock packages in tests/data import correctly after installation."""
 
 def test_data_one() -> None:
     """Test that the first mock package in tests/data import correctly after installation."""
