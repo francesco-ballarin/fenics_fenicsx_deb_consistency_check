@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: MIT
 """Mock package for pusimp tests.
 
-This package imports pusimp_dependency_one and pusimp_dependency_two.
+This package imports pusimp_dependency_one, pusimp_dependency_two and pusimp_dependency_three.
 pusimp_dependency_two will sometimes be broken by user-site imports, and is a mandatory dependency.
 pusimp_dependency_three will sometimes be broken by user-site imports, and is an optional dependency.
 """

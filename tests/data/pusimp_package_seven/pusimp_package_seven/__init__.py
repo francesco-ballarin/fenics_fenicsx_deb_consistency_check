@@ -15,7 +15,7 @@ import pusimp_golden_source
 import pusimp
 
 pusimp.prevent_user_site_imports(
-    "pusimp_package_five", pusimp_golden_source.system_package_manager, pusimp_golden_source.contact_url,
+    "pusimp_package_seven", pusimp_golden_source.system_package_manager, pusimp_golden_source.contact_url,
     pusimp_golden_source.system_path,
     ["pusimp_dependency_one", "pusimp_dependency_four"],
     ["pusimp-dependency-one", "pusimp-dependency-four"],
