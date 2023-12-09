@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: "0 0 * * WED"
   workflow_dispatch:
 
 jobs:
@@ -67,3 +69,13 @@ jobs:
         run: |
           python3 -m coverage combine .coverage*
           python3 -m coverage report --show-missing --skip-covered
+
+  warn:
+    runs-on: ubuntu-latest
+    if: github.repository == 'python-pusimp/pusimp' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+    steps:
+      - name: Warn if scheduled workflow is about to be disabled
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        with:
+          workflow-filename: ci.yml
+          days-elapsed: 50
