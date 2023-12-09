@@ -12,6 +12,7 @@ on pytest and virtualenv.
 
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -72,34 +73,6 @@ def assert_package_import_error(executable: str, package: str, expected: typing.
         )
 
 
-def assert_package_import_success_without_local_packages(package: str, package_path: str) -> None:
-    """Assert that the package imports correctly without any extra local packages."""
-    assert_package_location(sys.executable, package, package_path)
-
-
-def assert_package_import_errors_with_local_packages(
-    package: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
-    dependencies_extra_error_message: typing.List[str]
-) -> None:
-    """Assert that a package fails to import with extra local packages."""
-    virtual_env = VirtualEnv()
-    for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
-        virtual_env.install_package(dependency_pypi_name)
-        assert_package_location(
-            virtual_env.executable, dependency_import_name,
-            str(virtual_env.dist_path / dependency_import_name / "__init__.py")
-        )
-    dependencies_error_messages = ["dependencies were imported from a local path"]
-    dependencies_error_messages.extend(
-        f"* {dependency_import_name}: expected in" for dependency_import_name in dependencies_import_name
-    )
-    dependencies_error_messages.extend(
-        f"* run 'pip uninstall {dependency_pypi_name}' in" for dependency_pypi_name in dependencies_pypi_name
-    )
-    dependencies_error_messages.extend(dependencies_extra_error_message)
-    assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
-
-
 class TemporarilyEnableEnvironmentVariable(object):
     """Temporarily enable an environment variable in a test."""
 
@@ -116,54 +89,8 @@ class TemporarilyEnableEnvironmentVariable(object):
         exception_value: typing.Optional[BaseException],
         traceback: typing.Optional[types.TracebackType]
     ) -> None:
-        """Unse the enviornment variable."""
+        """Unset the enviornment variable."""
         del os.environ[self._variable_name]
-
-
-def assert_package_import_success_with_allowed_local_packages(
-    package: str, package_path: str, dependencies_import_name: typing.List[str],
-    dependencies_pypi_name: typing.List[str]
-) -> None:
-    """Assert that a package imports correctly even with extra local packages when asked to allow user-site imports."""
-    virtual_env = VirtualEnv()
-    for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
-        virtual_env.install_package(dependency_pypi_name)
-        assert_package_location(
-            virtual_env.executable, dependency_import_name,
-            str(virtual_env.dist_path / dependency_import_name / "__init__.py")
-        )
-    with TemporarilyEnableEnvironmentVariable(f"{package}_allow_user_site_imports".upper()):
-        assert_package_location(virtual_env.executable, package, package_path)
-
-
-def assert_package_import_errors_with_broken_non_optional_packages(
-    package: str, dependencies_import_name: typing.List[str]
-) -> None:
-    """Assert that a package fails to import when non-optional packages are broken."""
-    virtual_env = VirtualEnv()
-    for dependency_import_name in dependencies_import_name:
-        virtual_env.break_package(dependency_import_name)
-        assert_package_import_error(
-            virtual_env.executable, dependency_import_name, [f"{dependency_import_name} was purposely broken."]
-        )
-    dependencies_error_messages: typing.List[str] = []
-    dependencies_error_messages.extend(
-        f"{dependency_import_name} is broken" for dependency_import_name in dependencies_import_name
-    )
-    assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
-
-
-def assert_package_import_success_with_broken_optional_packages(
-    package: str, package_path: str, dependencies_import_name: typing.List[str]
-) -> None:
-    """Assert that a package imports correctly when optional packages are broken."""
-    virtual_env = VirtualEnv()
-    for dependency_import_name in dependencies_import_name:
-        virtual_env.break_package(dependency_import_name)
-        assert_package_import_error(
-            virtual_env.executable, dependency_import_name, [f"{dependency_import_name} was purposely broken."]
-        )
-    assert_package_location(virtual_env.executable, package, package_path)
 
 
 class VirtualEnv(object):
@@ -181,7 +108,20 @@ class VirtualEnv(object):
         self.executable = str(self.path / "bin" / "python3")
         self.env = dict(os.environ)
         self.env.pop("PYTHONPATH", None)  # ensure isolation
+
+    def __enter__(self) -> "VirtualEnv":
+        """Create the virtual environment."""
+        assert not self.path.exists()
         self.create()
+        return self
+
+    def __exit__(
+        self, exception_type: typing.Optional[typing.Type[BaseException]],
+        exception_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType]
+    ) -> None:
+        """Delete the virtual environment."""
+        shutil.rmtree(str(self.path), ignore_errors=True)
 
     def create(self) -> None:
         """Create a virtual environment, and add it to sys.path."""
@@ -213,3 +153,77 @@ class VirtualEnv(object):
         (self.dist_path / package).mkdir()
         with (self.dist_path / package / "__init__.py").open("w") as init_file:
             init_file.write(f"raise ImportError('{package} was purposely broken.')")
+
+
+def assert_package_import_success_without_local_packages(package: str, package_path: str) -> None:
+    """Assert that the package imports correctly without any extra local packages."""
+    assert_package_location(sys.executable, package, package_path)
+
+
+def assert_package_import_errors_with_local_packages(
+    package: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
+    dependencies_extra_error_message: typing.List[str]
+) -> None:
+    """Assert that a package fails to import with extra local packages."""
+    with VirtualEnv() as virtual_env:
+        for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
+            virtual_env.install_package(dependency_pypi_name)
+            assert_package_location(
+                virtual_env.executable, dependency_import_name,
+                str(virtual_env.dist_path / dependency_import_name / "__init__.py")
+            )
+        dependencies_error_messages = ["dependencies were imported from a local path"]
+        dependencies_error_messages.extend(
+            f"* {dependency_import_name}: expected in" for dependency_import_name in dependencies_import_name
+        )
+        dependencies_error_messages.extend(
+            f"* run 'pip uninstall {dependency_pypi_name}' in" for dependency_pypi_name in dependencies_pypi_name
+        )
+        dependencies_error_messages.extend(dependencies_extra_error_message)
+        assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
+
+
+def assert_package_import_success_with_allowed_local_packages(
+    package: str, package_path: str, dependencies_import_name: typing.List[str],
+    dependencies_pypi_name: typing.List[str]
+) -> None:
+    """Assert that a package imports correctly even with extra local packages when asked to allow user-site imports."""
+    with VirtualEnv() as virtual_env:
+        for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
+            virtual_env.install_package(dependency_pypi_name)
+            assert_package_location(
+                virtual_env.executable, dependency_import_name,
+                str(virtual_env.dist_path / dependency_import_name / "__init__.py")
+            )
+        with TemporarilyEnableEnvironmentVariable(f"{package}_allow_user_site_imports".upper()):
+            assert_package_location(virtual_env.executable, package, package_path)
+
+
+def assert_package_import_errors_with_broken_non_optional_packages(
+    package: str, dependencies_import_name: typing.List[str]
+) -> None:
+    """Assert that a package fails to import when non-optional packages are broken."""
+    with VirtualEnv() as virtual_env:
+        for dependency_import_name in dependencies_import_name:
+            virtual_env.break_package(dependency_import_name)
+            assert_package_import_error(
+                virtual_env.executable, dependency_import_name, [f"{dependency_import_name} was purposely broken."]
+            )
+        dependencies_error_messages: typing.List[str] = []
+        dependencies_error_messages.extend(
+            f"{dependency_import_name} is broken" for dependency_import_name in dependencies_import_name
+        )
+        assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
+
+
+def assert_package_import_success_with_broken_optional_packages(
+    package: str, package_path: str, dependencies_import_name: typing.List[str]
+) -> None:
+    """Assert that a package imports correctly when optional packages are broken."""
+    with VirtualEnv() as virtual_env:
+        for dependency_import_name in dependencies_import_name:
+            virtual_env.break_package(dependency_import_name)
+            assert_package_import_error(
+                virtual_env.executable, dependency_import_name, [f"{dependency_import_name} was purposely broken."]
+            )
+        assert_package_location(virtual_env.executable, package, package_path)
