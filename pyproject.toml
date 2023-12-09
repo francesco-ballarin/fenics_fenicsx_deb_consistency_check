@@ -48,7 +48,9 @@ data = [
     "pusimp_golden_source @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_golden_source",
     "pusimp_package_one @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_one",
     "pusimp_package_two @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_two",
-    "pusimp_package_three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_three"
+    "pusimp_package_three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_three",
+    "pusimp_package_four @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_four",
+    "pusimp_package_five @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_five"
 ]
 lint = [
     "isort",
@@ -80,7 +82,10 @@ warn_return_any = true
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = "virtualenv"
+module = [
+    "pusimp_dependency_missing",
+    "virtualenv"
+]
 ignore_missing_imports = true
 
 [tool.ruff]
