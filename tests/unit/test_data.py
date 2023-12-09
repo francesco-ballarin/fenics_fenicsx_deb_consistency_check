@@ -41,3 +41,18 @@ def test_data_four() -> None:
 def test_data_five() -> None:
     """Test that the fifth mock package in tests/data import correctly, because the missing dependency is optional."""
     import pusimp_package_five  # noqa: F401
+
+
+def test_data_six() -> None:
+    """Test that the sixth mock package in tests/data fails to import due to a broken mandatory dependency."""
+    with pytest.raises(ImportError) as excinfo:
+        import pusimp_package_six  # noqa: F401
+    import_error_text = str(excinfo.value)
+    assert import_error_text == (
+        "pusimp_dependency_four is broken. Error on import was 'pusimp_dependency_four is a broken package.'."
+    )
+
+
+def test_data_seven() -> None:
+    """Test that the seventh mock package in tests/data import correctly, because the broken dependency is optional."""
+    import pusimp_package_seven  # noqa: F401

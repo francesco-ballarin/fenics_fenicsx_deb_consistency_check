@@ -45,12 +45,15 @@ data = [
     "pusimp_dependency_one @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_one",
     "pusimp_dependency_two @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_two",
     "pusimp_dependency_three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_three",
+    "pusimp_dependency_four @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_four",
     "pusimp_golden_source @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_golden_source",
     "pusimp_package_one @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_one",
     "pusimp_package_two @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_two",
     "pusimp_package_three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_three",
     "pusimp_package_four @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_four",
-    "pusimp_package_five @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_five"
+    "pusimp_package_five @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_five",
+    "pusimp_package_six @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_six",
+    "pusimp_package_seven @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_seven"
 ]
 lint = [
     "isort",
