@@ -114,5 +114,5 @@ jobs:
           BACKENDS=(${BACKENDS_STR})
           for BACKEND in "${BACKENDS[@]}"; do
             echo "On ${BACKEND}"
-            pytest -svv applications/python3-${BACKEND}/tests/unit
+            pytest -vv applications/python3-${BACKEND}/tests/unit
           done
