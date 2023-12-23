@@ -15,7 +15,8 @@ import pytest
 from pusimp.utils import (
     assert_has_package, assert_not_has_package, assert_package_import_error,
     assert_package_import_errors_with_broken_non_optional_packages, assert_package_import_errors_with_local_packages,
-    assert_package_import_success_with_broken_optional_packages, assert_package_location, VirtualEnv)
+    assert_package_import_success_with_broken_optional_packages, assert_package_import_success_without_local_packages,
+    assert_package_location, VirtualEnv)
 
 import pusimp_golden_source  # isort: skip
 
@@ -97,6 +98,14 @@ def generate_test_data_pypi_names(import_names: typing.List[str]) -> typing.List
             f"#subdirectory=tests/data/{import_name}'"
         ) for import_name in import_names
     ]
+
+
+@pytest.mark.parametrize("package_name", ["pusimp_package_one", "pusimp_package_two", "pusimp_package_three"])
+def test_assert_package_import_success_without_local_packages_data_one_two_three(package_name: str) -> None:
+    """Test assert_package_import_success_without_local_packages on the first three mock packages."""
+    assert_package_import_success_without_local_packages(
+        package_name, os.path.join(pusimp_golden_source.system_path, package_name, "__init__.py")
+    )
 
 
 @pytest.mark.parametrize(
