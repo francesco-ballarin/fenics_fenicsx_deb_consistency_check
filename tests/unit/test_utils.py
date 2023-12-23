@@ -6,6 +6,7 @@
 """Test utility functions defined in pusimp.utils."""
 
 import importlib
+import json
 import os
 import sys
 import typing
@@ -96,16 +97,23 @@ def test_break_package_in_virtual_env() -> None:
 
 def generate_test_data_pypi_names(import_names: typing.List[str]) -> typing.List[str]:
     """Replace underscore with dash in import names, and add the git URL of the GitHub repo."""
+    pypi_names = [import_name.replace("_", "-") for import_name in import_names]
     pusimp_version = importlib.metadata.version("pusimp")
     if "dev" in pusimp_version:
-        data_tag = "main"
+        test_data_distribution = importlib.metadata.distribution(pypi_names[0])  # use the first, they are all the same
+        direct_url = test_data_distribution.read_text("direct_url.json")
+        assert direct_url is not None
+        direct_url_data = json.loads(direct_url)
+        assert "vcs_info" in direct_url_data
+        assert "commit_id" in direct_url_data["vcs_info"]
+        data_tag = direct_url_data["vcs_info"]["commit_id"]
     else:
         data_tag = f"v{pusimp_version}"
     return [
         (
-            f"'{import_name.replace('_', '-')} @ git+https://github.com/python-pusimp/pusimp.git@{data_tag}"
+            f"'{pypi_name} @ git+https://github.com/python-pusimp/pusimp.git@{data_tag}"
             f"#subdirectory=tests/data/{import_name}'"
-        ) for import_name in import_names
+        ) for (import_name, pypi_name) in zip(import_names, pypi_names)
     ]
 
 
