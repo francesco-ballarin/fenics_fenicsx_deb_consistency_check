@@ -59,9 +59,9 @@ def prevent_user_site_imports(
         If at least a dependency is imported from user-site, or if at least a mandatory dependency
         is broken or missing.
     """
-    assert len(dependencies_import_name) == len(dependencies_pypi_name)
-    assert len(dependencies_import_name) == len(dependencies_optional)
-    assert len(dependencies_import_name) == len(dependencies_extra_error_message)
+    assert len(dependencies_import_name) == len(dependencies_pypi_name), "Incorrect input lengths"
+    assert len(dependencies_import_name) == len(dependencies_optional), "Incorrect input lengths"
+    assert len(dependencies_import_name) == len(dependencies_extra_error_message), "Incorrect input lengths"
 
     allow_user_site_imports_env_name = f"{package_name}_allow_user_site_imports".upper()
     allow_user_site_imports_env_value = os.getenv(allow_user_site_imports_env_name) is not None
@@ -88,7 +88,7 @@ def prevent_user_site_imports(
                             "MISSING_OR_BROKEN", f"broken. Error on import was '{dependency_module_import_error}'"))
             else:
                 if dependency_module.__file__ != dependency_module_expected_path:
-                    assert dependency_module.__file__ is not None
+                    assert dependency_module.__file__ is not None, f"Unable to find location of {dependency_module}"
                     user_site_dependencies[dependency_id] = {
                         "expected": dependency_module_expected_path,
                         "actual": dependency_module.__file__

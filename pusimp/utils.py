@@ -49,7 +49,8 @@ def assert_package_location(executable: str, package: str, package_path: str) ->
         f"{executable} -c 'import {package}; print({package}.__file__)'", shell=True, capture_output=True)
     assert run_import_file.returncode == 0, (
         "This case was never supposed to happen, because {package} did import successfully with assert_has_package")
-    assert run_import_file.stdout.decode().strip() == package_path
+    assert run_import_file.stdout.decode().strip() == package_path, (
+        f"{package} was expected at {package_path}, but found at run_import_file.stdout.decode().strip()")
 
 
 def assert_package_import_error(executable: str, package: str, expected: typing.List[str]) -> None:
@@ -75,7 +76,7 @@ class TemporarilyEnableEnvironmentVariable(object):
 
     def __enter__(self) -> None:
         """Temporarily set the environment variable."""
-        assert self._variable_name not in os.environ
+        assert self._variable_name not in os.environ, f"{self._variable_name} was already found in the environment"
         os.environ[self._variable_name] = "enabled"
 
     def __exit__(
@@ -105,7 +106,7 @@ class VirtualEnv(object):
 
     def __enter__(self) -> "VirtualEnv":
         """Create the virtual environment."""
-        assert not self.path.exists()
+        assert not self.path.exists(), f"{self.path} already exists"
         self.create()
         return self
 
@@ -130,7 +131,7 @@ class VirtualEnv(object):
             # --break-system-packages, so we can always add that flag in self.install_package
             run_update_pip_again = subprocess.run(
                 f"{self.executable} -m pip install --upgrade pip", shell=True, capture_output=True)
-            assert run_update_pip_again.returncode == 0
+            assert run_update_pip_again.returncode == 0, "Failed to upgrade pip"
 
     def install_package(self, package: str) -> None:
         """Install a package in the virtual environment."""
