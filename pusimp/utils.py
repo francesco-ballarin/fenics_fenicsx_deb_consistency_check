@@ -6,7 +6,7 @@
 """Utility functions used while testing the package.
 
 Note that this file does not get automatically imported in __init__.py to avoid having a runtime dependency
-on pytest and virtualenv.
+on virtualenv.
 """
 
 import os
@@ -18,7 +18,6 @@ import tempfile
 import types
 import typing
 
-import pytest
 import virtualenv
 
 
@@ -43,32 +42,25 @@ def assert_not_has_package(executable: str, package: str) -> None:
     assert run_import.returncode != 0, f"Importing {package} was unexpectedly successful"
 
 
-def get_package_main_file(executable: str, package: str) -> str:
-    """Get the path of the package main file."""
-    run_import_file = subprocess.run(
-        f"{executable} -c 'import {package}; print({package}.__file__)'", shell=True, capture_output=True)
-    if run_import_file.returncode == 0:
-        return run_import_file.stdout.decode().strip()
-    else:
-        raise ImportError(
-            f"Importing {package} was not successful.\n"
-            f"stdout contains {run_import_file.stdout.decode().strip()}\n"
-            f"stderr contains {run_import_file.stderr.decode().strip()}")
-
-
 def assert_package_location(executable: str, package: str, package_path: str) -> None:
     """Assert that a package imports from the expected location."""
     assert_has_package(executable, package)
-    assert get_package_main_file(executable, package) == package_path
+    run_import_file = subprocess.run(
+        f"{executable} -c 'import {package}; print({package}.__file__)'", shell=True, capture_output=True)
+    assert run_import_file.returncode == 0, (
+        "This case was never supposed to happen, because {package} did import successfully with assert_has_package")
+    assert run_import_file.stdout.decode().strip() == package_path
 
 
 def assert_package_import_error(executable: str, package: str, expected: typing.List[str]) -> None:
     """Assert that a package fails to imports with the expected text in the ImportError message."""
-    assert_not_has_package(executable, package)
-    with pytest.raises(ImportError) as excinfo:
-        get_package_main_file(executable, package)
-    import_error_text = str(excinfo.value)
-    print(f"The following ImportError was raised:\n{import_error_text}")
+    run_import = subprocess.run(f"{executable} -c 'import {package}'", shell=True, capture_output=True)
+    assert run_import.returncode != 0, f"Importing {package} was unexpectedly successful"
+    import_error_text = (
+        f"Importing {package} was not successful.\n"
+        f"stdout contains {run_import.stdout.decode().strip()}\n"
+        f"stderr contains {run_import.stderr.decode().strip()}")
+    print(f"Package {package} did fail to import with error:\n{import_error_text}")
     for expected_ in expected:
         assert expected_ in import_error_text, (
             f"{expected_} was not found in the ImportError text, namely {import_error_text}"

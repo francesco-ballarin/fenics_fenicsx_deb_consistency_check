@@ -13,7 +13,7 @@ import pytest
 
 from pusimp.utils import (
     assert_has_package, assert_not_has_package, assert_package_import_error,
-    assert_package_import_errors_with_local_packages, assert_package_location, get_package_main_file, VirtualEnv)
+    assert_package_import_errors_with_local_packages, assert_package_location, VirtualEnv)
 
 
 def test_assert_has_package_success() -> None:
@@ -40,11 +40,6 @@ def test_assert_not_has_package_failure() -> None:
         assert_not_has_package(sys.executable, "pytest")
     assertion_error_text = str(excinfo.value)
     assert assertion_error_text.startswith("Importing pytest was unexpectedly successful")
-
-
-def test_get_package_main_file() -> None:
-    """Test get_package_main_file with a package that is surely installed."""
-    assert get_package_main_file(sys.executable, "pytest") == pytest.__file__
 
 
 def test_assert_package_location() -> None:
