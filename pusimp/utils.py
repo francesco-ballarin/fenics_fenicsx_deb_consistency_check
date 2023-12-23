@@ -132,7 +132,7 @@ class VirtualEnv(object):
         # virtualenv does not necessarily ship the same version of pip as the underlying environment
         run_update_pip = subprocess.run(
             f"{self.executable} -m pip install --upgrade --break-system-packages pip", shell=True, capture_output=True)
-        if run_update_pip.returncode != 0:
+        if run_update_pip.returncode != 0:  # pragma: no cover
             # it is possible that the version of pip shipped by virtualenv was not recent enough
             # to support --break-system-packages. The newly installed version will surely support
             # --break-system-packages, so we can always add that flag in self.install_package
