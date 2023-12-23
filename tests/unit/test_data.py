@@ -10,11 +10,15 @@ import os
 import shutil
 import sys
 import tempfile
-import tomllib
 
 import pytest
 
 import pusimp_golden_source  # isort: skip
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef,unused-ignore]
 
 
 all_mock_packages = [

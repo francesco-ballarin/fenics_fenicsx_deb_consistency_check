@@ -68,6 +68,7 @@ tests = [
     "coverage[toml]",
     "pip",
     "pytest",
+    "tomli; python_version < '3.11'",
     "virtualenv"
 ]
 
@@ -90,6 +91,8 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 module = [
     "pusimp_dependency_missing",
+    "tomli",
+    "tomllib",
     "virtualenv"
 ]
 ignore_missing_imports = true
