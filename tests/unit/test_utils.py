@@ -66,7 +66,7 @@ def test_virtual_env() -> None:
         assert virtual_env.path.exists()
 
 
-def test_install_package_in_virtual_env() -> None:
+def test_install_package_in_virtual_env_success() -> None:
     """Test that installation in a virtual environment is successful."""
     with VirtualEnv() as virtual_env:
         virtual_env.install_package("my-empty-package")
@@ -76,6 +76,14 @@ def test_install_package_in_virtual_env() -> None:
         assert_package_import_error(
             sys.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
         )
+
+def test_install_package_in_virtual_env_failure() -> None:
+    """Test that installation in a virtual environment is failing when the package does not exist on pypi."""
+    with VirtualEnv() as virtual_env:
+        with pytest.raises(RuntimeError) as excinfo:
+            virtual_env.install_package("not-existing-package")
+        assertion_error_text = str(excinfo.value)
+        assert assertion_error_text.startswith("Installing not-existing-package was not successful")
 
 
 def test_break_package_in_virtual_env() -> None:
