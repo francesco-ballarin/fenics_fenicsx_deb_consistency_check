@@ -6,11 +6,13 @@
 """Test utility functions defined in pusimp.utils."""
 
 import sys
+import typing
 
 import pytest
 
 from pusimp.utils import (
-    assert_package_import_error, assert_package_location, get_package_main_file, has_package, VirtualEnv)
+    assert_package_import_error, assert_package_import_errors_with_local_packages, assert_package_location,
+    get_package_main_file, has_package, VirtualEnv)
 
 
 def test_has_package() -> None:
@@ -57,3 +59,41 @@ def test_break_package_in_virtual_env() -> None:
         virtual_env.break_package("pytest")
         assert_package_import_error(virtual_env.executable, "pytest", ["pytest was purposely broken."])
         assert_package_location(sys.executable, "pytest", pytest.__file__)
+
+
+def generate_test_data_pypi_names(import_names: typing.List[str]) -> typing.List[str]:
+    """Replace underscore with dash in import names, and add the git URL of the GitHub repo."""
+    return [
+        (
+            f"'{import_name.replace('_', '-')} @ git+https://github.com/python-pusimp/pusimp.git@main"
+            f"#subdirectory=tests/data/{import_name}'"
+        ) for import_name in import_names
+    ]
+
+
+@pytest.mark.parametrize(
+    "package_name,dependencies_import_name,dependencies_extra_error_message",
+    [
+        ("pusimp_package_one", ["pusimp_dependency_two"], ["pusimp_dependency_two is mandatory."]),
+        ("pusimp_package_two", ["pusimp_dependency_two"], ["pusimp_dependency_two is mandatory."]),
+        ("pusimp_package_two", ["pusimp_dependency_three"], ["pusimp_dependency_three is optional."]),
+        (
+            "pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"],
+            ["pusimp_dependency_two is mandatory.", "pusimp_dependency_three is optional."]
+        ),
+        ("pusimp_package_three", ["pusimp_dependency_two"], ["pusimp_dependency_two is mandatory."]),
+        ("pusimp_package_three", ["pusimp_dependency_three"], ["pusimp_dependency_three is optional."]),
+        (
+            "pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"],
+            ["pusimp_dependency_two is mandatory.", "pusimp_dependency_three is optional."]
+        ),
+    ]
+)
+def test_assert_package_import_errors_with_local_packages_data_one_two_three(
+    package_name: str, dependencies_import_name: typing.List[str], dependencies_extra_error_message: typing.List[str]
+) -> None:
+    """Test that assert_package_import_errors_with_local_packages on the first three mock package in tests/data."""
+    assert_package_import_errors_with_local_packages(
+        package_name, dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name),
+        dependencies_extra_error_message
+    )

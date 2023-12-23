@@ -177,8 +177,12 @@ def assert_package_import_errors_with_local_packages(
         dependencies_error_messages.extend(
             f"* {dependency_import_name}: expected in" for dependency_import_name in dependencies_import_name
         )
+        dependencies_pypi_name_only = [
+            dependency_pypi_name.replace("'", "").split("@")[0].strip()  # from 'name @ git+url' to name
+            for dependency_pypi_name in dependencies_pypi_name
+        ]
         dependencies_error_messages.extend(
-            f"* run 'pip uninstall {dependency_pypi_name}' in" for dependency_pypi_name in dependencies_pypi_name
+            f"* run 'pip uninstall {dependency_pypi_name}' in" for dependency_pypi_name in dependencies_pypi_name_only
         )
         dependencies_error_messages.extend(dependencies_extra_error_message)
         assert_package_import_error(virtual_env.executable, package, dependencies_error_messages)
