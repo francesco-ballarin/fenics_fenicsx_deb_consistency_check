@@ -9,7 +9,6 @@ Note that this file does not get automatically imported in __init__.py to avoid 
 on pytest and virtualenv.
 """
 
-
 import os
 import pathlib
 import shutil
@@ -23,22 +22,25 @@ import pytest
 import virtualenv
 
 
-def has_package(executable: str, package: str, verbose_on_failure: bool = False) -> bool:
-    """Return if package is installed.
+def assert_has_package(executable: str, package: str) -> None:
+    """Assert that a package is installed.
 
     Note that it is not safe to simply import the package in the current pytest environment,
     since the environment itself might change from one test to the other, but python packages
     can be imported only once and not unloaded.
     """
     run_import = subprocess.run(f"{executable} -c 'import {package}'", shell=True, capture_output=True)
-    if run_import.returncode == 0:
-        return True
-    else:
-        if verbose_on_failure:
-            print(f"Importing {package} was not successful.\n"
-                  f"stdout contains {run_import.stdout.decode().strip()}\n"
-                  f"stderr contains {run_import.stderr.decode().strip()}\n")
-        return False
+    assert run_import.returncode == 0, (
+        f"Importing {package} was not successful.\n"
+        f"stdout contains {run_import.stdout.decode().strip()}\n"
+        f"stderr contains {run_import.stderr.decode().strip()}"
+    )
+
+
+def assert_not_has_package(executable: str, package: str) -> None:
+    """Assert that a package is not installed."""
+    run_import = subprocess.run(f"{executable} -c 'import {package}'", shell=True, capture_output=True)
+    assert run_import.returncode != 0, f"Importing {package} was unexpectedly successful"
 
 
 def get_package_main_file(executable: str, package: str) -> str:
@@ -51,18 +53,18 @@ def get_package_main_file(executable: str, package: str) -> str:
         raise ImportError(
             f"Importing {package} was not successful.\n"
             f"stdout contains {run_import_file.stdout.decode().strip()}\n"
-            f"stderr contains {run_import_file.stderr.decode().strip()}\n")
+            f"stderr contains {run_import_file.stderr.decode().strip()}")
 
 
 def assert_package_location(executable: str, package: str, package_path: str) -> None:
     """Assert that a package imports from the expected location."""
-    assert has_package(executable, package, True)
+    assert_has_package(executable, package)
     assert get_package_main_file(executable, package) == package_path
 
 
 def assert_package_import_error(executable: str, package: str, expected: typing.List[str]) -> None:
     """Assert that a package fails to imports with the expected text in the ImportError message."""
-    assert not has_package(executable, package)
+    assert_not_has_package(executable, package)
     with pytest.raises(ImportError) as excinfo:
         get_package_main_file(executable, package)
     import_error_text = str(excinfo.value)
@@ -147,7 +149,7 @@ class VirtualEnv(object):
             raise RuntimeError(
                 f"Installing {package} was not successful.\n"
                 f"stdout contains {run_install.stdout.decode()}\n"
-                f"stderr contains {run_install.stderr.decode()}\n")
+                f"stderr contains {run_install.stderr.decode()}")
 
     def break_package(self, package: str) -> None:
         """Install a mock package in the virtual environment which errors out."""

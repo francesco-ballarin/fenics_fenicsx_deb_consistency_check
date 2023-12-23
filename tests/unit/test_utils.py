@@ -12,13 +12,34 @@ import typing
 import pytest
 
 from pusimp.utils import (
-    assert_package_import_error, assert_package_import_errors_with_local_packages, assert_package_location,
-    get_package_main_file, has_package, VirtualEnv)
+    assert_has_package, assert_not_has_package, assert_package_import_error,
+    assert_package_import_errors_with_local_packages, assert_package_location, get_package_main_file, VirtualEnv)
 
 
-def test_has_package() -> None:
-    """Test has_package with a package that is surely installed."""
-    assert has_package(sys.executable, "pytest", True)
+def test_assert_has_package_success() -> None:
+    """Test that assert_has_package succeeds with a package that is surely installed."""
+    assert_has_package(sys.executable, "pytest")
+
+
+def test_assert_has_package_failure() -> None:
+    """Test that assert_has_package fails with a package that is surely not installed."""
+    with pytest.raises(AssertionError) as excinfo:
+        assert_has_package(sys.executable, "not_existing_package")
+    assertion_error_text = str(excinfo.value)
+    assert assertion_error_text.startswith("Importing not_existing_package was not successful")
+
+
+def test_assert_not_has_package_success() -> None:
+    """Test that assert_not_has_package succeeds with a package that is surely not installed."""
+    assert_not_has_package(sys.executable, "not_existing_package")
+
+
+def test_assert_not_has_package_failure() -> None:
+    """Test that assert_not_has_package fails with a package that is surely installed."""
+    with pytest.raises(AssertionError) as excinfo:
+        assert_not_has_package(sys.executable, "pytest")
+    assertion_error_text = str(excinfo.value)
+    assert assertion_error_text.startswith("Importing pytest was unexpectedly successful")
 
 
 def test_get_package_main_file() -> None:
