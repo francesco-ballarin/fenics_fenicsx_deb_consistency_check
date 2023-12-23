@@ -53,7 +53,9 @@ def assert_package_location(executable: str, package: str, package_path: str) ->
         f"{package} was expected at {package_path}, but found at run_import_file.stdout.decode().strip()")
 
 
-def assert_package_import_error(executable: str, package: str, expected: typing.List[str], verbose: bool) -> None:
+def assert_package_import_error(
+    executable: str, package: str, expected: typing.List[str], not_expected: typing.List[str], verbose: bool
+) -> None:
     """Assert that a package fails to imports with the expected text in the ImportError message."""
     run_import = subprocess.run(f"{executable} -c 'import {package}'", shell=True, capture_output=True)
     assert run_import.returncode != 0, f"Importing {package} was unexpectedly successful"
@@ -66,6 +68,10 @@ def assert_package_import_error(executable: str, package: str, expected: typing.
     for expected_ in expected:
         assert expected_ in import_error_text, (
             f"{expected_} was not found in the ImportError text, namely {import_error_text}"
+        )
+    for not_expected_ in not_expected:
+        assert not_expected_ not in import_error_text, (
+            f"{not_expected_} was unexpectedly found in the ImportError text, namely {import_error_text}"
         )
 
 
@@ -181,7 +187,7 @@ def assert_package_import_errors_with_local_packages(
             f"* run 'pip uninstall {dependency_pypi_name}' in" for dependency_pypi_name in dependencies_pypi_name_only
         )
         dependencies_error_messages.extend(dependencies_extra_error_message)
-        assert_package_import_error(virtual_env.executable, package, dependencies_error_messages, True)
+        assert_package_import_error(virtual_env.executable, package, dependencies_error_messages, [], True)
 
 
 def assert_package_import_success_with_allowed_local_packages(
@@ -201,21 +207,31 @@ def assert_package_import_success_with_allowed_local_packages(
 
 
 def assert_package_import_errors_with_broken_non_optional_packages(
-    package: str, dependencies_import_name: typing.List[str]
+    package: str, dependencies_import_name: typing.List[str], dependencies_optional: typing.List[bool]
 ) -> None:
     """Assert that a package fails to import when non-optional packages are broken."""
     with VirtualEnv() as virtual_env:
-        for dependency_import_name in dependencies_import_name:
-            virtual_env.break_package(dependency_import_name)
-            assert_package_import_error(
-                virtual_env.executable, dependency_import_name, [f"{dependency_import_name} was purposely broken."],
-                False
-            )
-        dependencies_error_messages: typing.List[str] = []
-        dependencies_error_messages.extend(
-            f"{dependency_import_name} is broken" for dependency_import_name in dependencies_import_name
+        for (dependency_import_name, dependency_optional) in zip(dependencies_import_name, dependencies_optional):
+            if not dependency_optional:
+                virtual_env.break_package(dependency_import_name)
+                assert_package_import_error(
+                    virtual_env.executable, dependency_import_name,
+                    [f"{dependency_import_name} was purposely broken."], [], False
+                )
+        dependencies_expected_error_messages = [
+            f"{dependency_import_name} is broken"
+            for (dependency_import_name, dependency_optional) in zip(dependencies_import_name, dependencies_optional)
+            if not dependency_optional
+        ]
+        dependencies_not_expected_error_messages = [
+            f"{dependency_import_name} is broken"
+            for (dependency_import_name, dependency_optional) in zip(dependencies_import_name, dependencies_optional)
+            if dependency_optional
+        ]
+        assert_package_import_error(
+            virtual_env.executable, package, dependencies_expected_error_messages,
+            dependencies_not_expected_error_messages, True
         )
-        assert_package_import_error(virtual_env.executable, package, dependencies_error_messages, True)
 
 
 def assert_package_import_success_with_broken_optional_packages(
@@ -226,7 +242,7 @@ def assert_package_import_success_with_broken_optional_packages(
         for dependency_import_name in dependencies_import_name:
             virtual_env.break_package(dependency_import_name)
             assert_package_import_error(
-                virtual_env.executable, dependency_import_name, [f"{dependency_import_name} was purposely broken."],
-                False
+                virtual_env.executable, dependency_import_name,
+                [f"{dependency_import_name} was purposely broken."], [], False
             )
         assert_package_location(virtual_env.executable, package, package_path)
