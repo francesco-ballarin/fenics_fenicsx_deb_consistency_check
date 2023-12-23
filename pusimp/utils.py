@@ -235,14 +235,16 @@ def assert_package_import_errors_with_broken_non_optional_packages(
 
 
 def assert_package_import_success_with_broken_optional_packages(
-    package: str, package_path: str, dependencies_import_name: typing.List[str]
+    package: str, package_path: str, dependencies_import_name: typing.List[str],
+    dependencies_optional: typing.List[bool]
 ) -> None:
     """Assert that a package imports correctly when optional packages are broken."""
     with VirtualEnv() as virtual_env:
-        for dependency_import_name in dependencies_import_name:
-            virtual_env.break_package(dependency_import_name)
-            assert_package_import_error(
-                virtual_env.executable, dependency_import_name,
-                [f"{dependency_import_name} was purposely broken."], [], False
-            )
+        for (dependency_import_name, dependency_optional) in zip(dependencies_import_name, dependencies_optional):
+            if dependency_optional:
+                virtual_env.break_package(dependency_import_name)
+                assert_package_import_error(
+                    virtual_env.executable, dependency_import_name,
+                    [f"{dependency_import_name} was purposely broken."], [], False
+                )
         assert_package_location(virtual_env.executable, package, package_path)

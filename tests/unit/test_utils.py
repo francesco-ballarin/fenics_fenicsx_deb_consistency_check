@@ -6,6 +6,7 @@
 """Test utility functions defined in pusimp.utils."""
 
 import importlib
+import os
 import sys
 import typing
 
@@ -14,7 +15,9 @@ import pytest
 from pusimp.utils import (
     assert_has_package, assert_not_has_package, assert_package_import_error,
     assert_package_import_errors_with_broken_non_optional_packages, assert_package_import_errors_with_local_packages,
-    assert_package_location, VirtualEnv)
+    assert_package_import_success_with_broken_optional_packages, assert_package_location, VirtualEnv)
+
+import pusimp_golden_source  # isort: skip
 
 
 def test_assert_has_package_success() -> None:
@@ -192,3 +195,28 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_one
         )
     assertion_error_text = str(excinfo.value)
     assert f"Importing {package_name} was unexpectedly successful" in assertion_error_text
+
+
+@pytest.mark.parametrize(
+    "package_name,dependencies_import_name,dependencies_optional",
+    [
+        ("pusimp_package_one", ["pusimp_dependency_two"], [False]),
+        ("pusimp_package_two", ["pusimp_dependency_two"], [False]),
+        ("pusimp_package_two", ["pusimp_dependency_three"], [True]),
+        ("pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]),
+        ("pusimp_package_three", ["pusimp_dependency_two"], [False]),
+        ("pusimp_package_three", ["pusimp_dependency_three"], [True]),
+        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True])
+    ]
+)
+def test_assert_package_import_success_with_broken_optional_packages_data_one_two_three(
+    package_name: str, dependencies_import_name: typing.List[str], dependencies_optional: typing.List[bool]
+) -> None:
+    """Test success of assert_package_import_success_with_broken_optional_packages on the first three mock packages.
+
+    The successful cases are the cases in which dependencies_import_name lists actual optional dependencies.
+    """
+    assert_package_import_success_with_broken_optional_packages(
+        package_name, os.path.join(pusimp_golden_source.system_path, package_name, "__init__.py"),
+        dependencies_import_name, dependencies_optional
+    )
