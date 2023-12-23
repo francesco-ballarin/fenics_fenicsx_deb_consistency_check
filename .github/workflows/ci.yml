@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: "0 0 * * WED"
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: "The branch, tag or SHA to checkout"
+        type: string
 
 jobs:
   test:
@@ -44,6 +49,8 @@ jobs:
         run: |
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - name: Install dependencies (default GitHub actions image)
         if: startsWith(matrix.name, 'python-') == true
         uses: actions/setup-python@v4
