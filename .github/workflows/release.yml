@@ -7,7 +7,55 @@ on:
         description: "Version number, without v prefix"
 
 jobs:
-  release:
+  prepare_branches:
     runs-on: ubuntu-latest
     steps:
+      - name: Mark workspace as safe
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+      - name: Configure username and email
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Delete existing branches
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          for BRANCH_NAME in pre${VERSION} v${VERSION} post${VERSION}; do
+            if [[ -n $(git branch --list ${BRANCH_NAME}) ]]; then
+              git branch -D ${BRANCH_NAME}
+            fi
+            if [[ -n $(git ls-remote --heads origin ${BRANCH_NAME}) ]]; then
+              git push origin -d ${BRANCH_NAME}
+            fi
+          done
+        shell: bash
+      - name: Prepare branch pre release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          PRE_BRANCH_NAME=pre${VERSION}
+          git checkout -b ${PRE_BRANCH_NAME}
+          git push origin ${PRE_BRANCH_NAME}
+      - name: Prepare branch for release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          RELEASE_BRANCH_NAME=v${VERSION}
+          git checkout -b ${RELEASE_BRANCH_NAME}
+          find . -type f -name pyproject.toml -exec sed -i "s|version = \".*\"|version = \"${VERSION}\"|g" {} \;
+          sed -i "s|https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data|https://github.com/python-pusimp/pusimp.git@v${VERSION}#subdirectory=tests/data|g" pyproject.toml
+          git add .
+          git commit -m "Bump version to ${VERSION}"
+          git push origin ${RELEASE_BRANCH_NAME}
+      - name: Prepare branch post release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          POST_BRANCH_NAME=post${VERSION}
+          DEV_VERSION=$(echo ${VERSION} | awk -F. -v OFS=. '{$NF="dev"$NF+1;print}')
+          git checkout -b ${POST_BRANCH_NAME}
+          find . -type f -name pyproject.toml -exec sed -i "s|version = \"${VERSION}\"|version = \"${DEV_VERSION}\"|g" {} \;
+          sed -i "s|https://github.com/python-pusimp/pusimp.git@v${VERSION}#subdirectory=tests/data|https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data|g" pyproject.toml
+          git add .
+          git commit -m "Reset version number to ${DEV_VERSION} after release"
+          git push origin ${POST_BRANCH_NAME}
