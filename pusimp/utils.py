@@ -121,7 +121,7 @@ class VirtualEnv(object):
         traceback: typing.Optional[types.TracebackType]
     ) -> None:
         """Delete the virtual environment."""
-        shutil.rmtree(str(self.path), ignore_errors=True)
+        shutil.rmtree(str(self.path.parent), ignore_errors=True)
 
     def create(self) -> None:
         """Create a virtual environment, and add it to sys.path."""
