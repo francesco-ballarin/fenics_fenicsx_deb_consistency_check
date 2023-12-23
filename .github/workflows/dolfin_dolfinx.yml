@@ -1,9 +1,6 @@
 name: FEniCS/FEniCSx patches
 
 on:
-  push:
-    branches:
-      - "**"
   pull_request:
     branches:
       - main
