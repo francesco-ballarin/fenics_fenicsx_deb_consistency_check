@@ -15,6 +15,7 @@ import pytest
 from pusimp.utils import (
     assert_has_package, assert_not_has_package, assert_package_import_error,
     assert_package_import_errors_with_broken_non_optional_packages, assert_package_import_errors_with_local_packages,
+    assert_package_import_success_with_allowed_local_packages,
     assert_package_import_success_with_broken_optional_packages, assert_package_import_success_without_local_packages,
     assert_package_location, VirtualEnv)
 
@@ -133,6 +134,28 @@ def test_assert_package_import_errors_with_local_packages_data_one_two_three(
     assert_package_import_errors_with_local_packages(
         package_name, dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name),
         dependencies_extra_error_message
+    )
+
+
+@pytest.mark.parametrize(
+    "package_name,dependencies_import_name",
+    [
+        ("pusimp_package_one", ["pusimp_dependency_two"]),
+        ("pusimp_package_two", ["pusimp_dependency_two"]),
+        ("pusimp_package_two", ["pusimp_dependency_three"]),
+        ("pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"]),
+        ("pusimp_package_three", ["pusimp_dependency_two"]),
+        ("pusimp_package_three", ["pusimp_dependency_three"]),
+        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"])
+    ]
+)
+def test_assert_package_import_success_with_allowed_local_packages_data_one_two_three(
+    package_name: str, dependencies_import_name: typing.List[str]
+) -> None:
+    """Test assert_package_import_success_with_allowed_local_packages on the first three mock packages."""
+    assert_package_import_success_with_allowed_local_packages(
+        package_name, os.path.join(pusimp_golden_source.system_path, package_name, "__init__.py"),
+        dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name)
     )
 
 
