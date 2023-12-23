@@ -10,10 +10,66 @@ import os
 import shutil
 import sys
 import tempfile
+import tomllib
 
 import pytest
 
 import pusimp_golden_source  # isort: skip
+
+
+all_mock_packages = [
+    "pusimp_package_one",
+    "pusimp_package_two",
+    "pusimp_package_three",
+    "pusimp_package_four",
+    "pusimp_package_five",
+    "pusimp_package_six",
+    "pusimp_package_seven",
+    "pusimp_package_eight",
+    "pusimp_package_nine"
+]
+
+all_mock_dependencies = [
+    "pusimp_dependency_one",
+    "pusimp_dependency_two",
+    "pusimp_dependency_three",
+    "pusimp_dependency_four",
+    "pusimp_dependency_five",
+    "pusimp_dependency_six"
+]
+
+all_mock_golden = [
+    "pusimp_golden_source"
+]
+
+
+def test_data_in_pyproject() -> None:
+    """Test that every mock package, dependency and golden is listed in pyproject.toml."""
+    pyproject = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "pyproject.toml")
+    with open(pyproject, "rb") as f:
+        data = tomllib.load(f)["project"]["optional-dependencies"]["data"]
+        data_names = {mock_name_and_url.split("@")[0].strip() for mock_name_and_url in data}
+        data_tags = {
+            mock_name_and_url.split("@")[0].strip(): mock_name_and_url.split("@")[2].split("#")[0]
+            for mock_name_and_url in data
+        }
+    for mock_name in all_mock_packages + all_mock_dependencies + all_mock_golden:
+        data_names.remove(mock_name.replace("_", "-"))
+    assert len(data_names) == 0
+    pusimp_version = importlib.metadata.version("pusimp")
+    if "dev" in pusimp_version:
+        mock_tag_expected = "main"
+    else:
+        mock_tag_expected = f"v{pusimp_version}"
+    for (mock_name, mock_tag) in data_tags.items():
+        assert mock_tag == mock_tag_expected, f"{mock_name} has invalid tag: {mock_tag} vs {mock_tag_expected}"
+
+
+def test_data_versions() -> None:
+    """Test that the version of every mock package, dependency and golden is the same as the main package."""
+    pusimp_version = importlib.metadata.version("pusimp")
+    for mock in all_mock_packages + all_mock_dependencies + all_mock_golden:
+        assert importlib.metadata.version(mock.replace("_", "-")) == pusimp_version
 
 
 def test_data_one() -> None:

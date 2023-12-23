@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MIT
 """Test utility functions defined in pusimp.utils."""
 
+import importlib
 import sys
 import typing
 
@@ -63,9 +64,14 @@ def test_break_package_in_virtual_env() -> None:
 
 def generate_test_data_pypi_names(import_names: typing.List[str]) -> typing.List[str]:
     """Replace underscore with dash in import names, and add the git URL of the GitHub repo."""
+    pusimp_version = importlib.metadata.version("pusimp")
+    if "dev" in pusimp_version:
+        data_tag = "main"
+    else:
+        data_tag = f"v{pusimp_version}"
     return [
         (
-            f"'{import_name.replace('_', '-')} @ git+https://github.com/python-pusimp/pusimp.git@main"
+            f"'{import_name.replace('_', '-')} @ git+https://github.com/python-pusimp/pusimp.git@{data_tag}"
             f"#subdirectory=tests/data/{import_name}'"
         ) for import_name in import_names
     ]
