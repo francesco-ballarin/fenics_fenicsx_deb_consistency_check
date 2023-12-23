@@ -15,11 +15,6 @@ import pytest
 
 import pusimp_golden_source  # isort: skip
 
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore[no-redef,unused-ignore]
-
 
 all_mock_packages = [
     "pusimp_package_one",
@@ -49,6 +44,7 @@ all_mock_golden = [
 
 def test_data_in_pyproject() -> None:
     """Test that every mock package, dependency and golden is listed in pyproject.toml."""
+    tomllib = pytest.importorskip("tomllib")
     pyproject = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "pyproject.toml")
     with open(pyproject, "rb") as f:
         data = tomllib.load(f)["project"]["optional-dependencies"]["data"]
