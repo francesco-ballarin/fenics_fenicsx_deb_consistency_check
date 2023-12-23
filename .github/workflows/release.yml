@@ -59,3 +59,21 @@ jobs:
           git add .
           git commit -m "Reset version number to ${DEV_VERSION} after release"
           git push origin ${POST_BRANCH_NAME}
+
+  test_branch_pre_release_installing_from_github:
+    needs: [prepare_branches]
+    uses: python-pusimp/pusimp/.github/workflows/ci.yml@main
+    with:
+      ref: pre${{ github.event.inputs.version }}
+
+  test_branch_for_release_installing_from_github:
+    needs: [prepare_branches]
+    uses: python-pusimp/pusimp/.github/workflows/ci.yml@main
+    with:
+      ref: v${{ github.event.inputs.version }}
+
+  test_branch_post_release_installing_from_github:
+    needs: [prepare_branches]
+    uses: python-pusimp/pusimp/.github/workflows/ci.yml@main
+    with:
+      ref: post${{ github.event.inputs.version }}
