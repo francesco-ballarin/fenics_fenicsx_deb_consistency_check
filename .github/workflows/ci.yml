@@ -88,7 +88,7 @@ jobs:
           python3 -m coverage run --source=pusimp -m pytest -vv tests/unit
       - name: Check test coverage
         run: |
-          python3 -m coverage report --show-missing --skip-covered
+          python3 -m coverage report --fail-under=100 --show-missing --skip-covered
 
   warn:
     runs-on: ubuntu-latest
