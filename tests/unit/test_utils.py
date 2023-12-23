@@ -49,7 +49,9 @@ def test_assert_package_location() -> None:
 
 def test_assert_package_import_error() -> None:
     """Test assert_package_import_error with a package that is surely not installed."""
-    assert_package_import_error(sys.executable, "not_existing_package", ["No module named 'not_existing_package'"])
+    assert_package_import_error(
+        sys.executable, "not_existing_package", ["No module named 'not_existing_package'"], False
+    )
 
 
 def test_virtual_env() -> None:
@@ -66,7 +68,7 @@ def test_install_package_in_virtual_env() -> None:
             virtual_env.executable, "my_empty_package", str(virtual_env.dist_path / "my_empty_package" / "__init__.py")
         )
         assert_package_import_error(
-            sys.executable, "my_empty_package", ["No module named 'my_empty_package'"]
+            sys.executable, "my_empty_package", ["No module named 'my_empty_package'"], False
         )
 
 
@@ -74,7 +76,7 @@ def test_break_package_in_virtual_env() -> None:
     """Test breaking an existing package by a mock installation in a virtual environment."""
     with VirtualEnv() as virtual_env:
         virtual_env.break_package("pytest")
-        assert_package_import_error(virtual_env.executable, "pytest", ["pytest was purposely broken."])
+        assert_package_import_error(virtual_env.executable, "pytest", ["pytest was purposely broken."], False)
         assert_package_location(sys.executable, "pytest", pytest.__file__)
 
 
