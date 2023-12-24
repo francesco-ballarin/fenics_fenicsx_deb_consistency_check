@@ -1,6 +1,8 @@
 name: Publish on PyPI
 
 on:
+  schedule:
+    - cron: "0 0 * * WED"
   workflow_dispatch:
     inputs:
       index:
@@ -102,3 +104,13 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: ${{ needs.process_inputs.outputs.index_repository_url }}
+
+  warn:
+    runs-on: ubuntu-latest
+    if: github.repository == 'python-pusimp/pusimp' && github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+    steps:
+      - name: Warn if scheduled workflow is about to be disabled
+        uses: fem-on-colab/warn-workflow-about-to-be-disabled-action@main
+        with:
+          workflow-filename: pypi.yml
+          days-elapsed: 50
