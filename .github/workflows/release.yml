@@ -10,9 +10,6 @@ jobs:
   prepare_branches:
     runs-on: ubuntu-latest
     steps:
-      - name: Mark workspace as safe
-        run: |
-          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
@@ -75,3 +72,53 @@ jobs:
     uses: python-pusimp/pusimp/.github/workflows/ci.yml@main
     with:
       ref: post${{ github.event.inputs.version }}
+
+  publish_release_to_testpypi:
+    needs: [test_branch_pre_release_installing_from_github, test_branch_for_release_installing_from_github, test_branch_post_release_installing_from_github]
+    uses: python-pusimp/pusimp/.github/workflows/pypi.yml@main
+    with:
+      ref: v${{ github.event.inputs.version }}
+      index: TestPyPI
+
+  publish_release_to_pypi:
+    needs: [publish_release_to_testpypi]
+    uses: python-pusimp/pusimp/.github/workflows/pypi.yml@main
+    with:
+      ref: v${{ github.event.inputs.version }}
+      index: TestPyPI
+
+  push_to_repo_and_cleanup:
+    needs: [publish_release_to_pypi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+      - name: Delete branch pre release
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          PRE_BRANCH_NAME=pre${VERSION}
+          git push origin -d ${PRE_BRANCH_NAME}
+      - name: Replace branch for release with a tag
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          RELEASE_BRANCH_NAME=v${VERSION}
+          BACKUP_HEAD=$(git rev-parse HEAD)
+          git checkout ${RELEASE_BRANCH_NAME}
+          RELEASE_BRANCH_NAME_HEAD=$(git rev-parse HEAD)
+          git checkout ${BACKUP_HEAD}
+          git branch -D ${RELEASE_BRANCH_NAME}
+          git push origin -d ${RELEASE_BRANCH_NAME}
+          git tag ${RELEASE_BRANCH_NAME} ${RELEASE_BRANCH_NAME_HEAD}
+          git push origin ${RELEASE_BRANCH_NAME}
+      - name: Merge branch post release with the branch from which this workflow was called
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          POST_BRANCH_NAME=post${VERSION}
+          CALLING_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+          git checkout ${POST_BRANCH_NAME}
+          git checkout ${CALLING_BRANCH_NAME}
+          git merge ${POST_BRANCH_NAME}
+          git branch -D ${POST_BRANCH_NAME}
+          git push origin -d ${POST_BRANCH_NAME}
+          git push origin ${CALLING_BRANCH_NAME}
