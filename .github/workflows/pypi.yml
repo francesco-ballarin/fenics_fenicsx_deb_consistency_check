@@ -25,14 +25,14 @@ jobs:
         run: |
           if [[ -z "${{ (inputs || github.event.inputs).index }}" ]]; then
             echo "index=TestPyPI" >> ${GITHUB_OUTPUT}
-            echo "index_repository_url=https://test.pypi.org/legacy/" >> ${GITHUB_OUTPUT}
+            echo "index_repository_url=https://test.pypi.org" >> ${GITHUB_OUTPUT}
           else
             INDEX=${{ (inputs || github.event.inputs).index }}
             echo "index=${INDEX}" >> ${GITHUB_OUTPUT}
             if [[ "${INDEX}" == "TestPyPI" ]]; then
-              echo "index_repository_url=https://test.pypi.org/legacy/" >> ${GITHUB_OUTPUT}
+              echo "index_repository_url=https://test.pypi.org" >> ${GITHUB_OUTPUT}
             elif [[ "${INDEX}" == "PyPI" ]]; then
-              echo "index_repository_url=" >> ${GITHUB_OUTPUT}
+              echo "index_repository_url=https://pypi.org" >> ${GITHUB_OUTPUT}
             else
               echo "Invalid package index" && exit 1
             fi
@@ -98,7 +98,7 @@ jobs:
       - name: Publish package distributions
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: ${{ needs.process_inputs.outputs.index_repository_url }}
+          repository-url: ${{ needs.process_inputs.outputs.index_repository_url }}/legacy/
 
   test:
     needs: [process_inputs, build_distributions, publish]

@@ -77,39 +77,74 @@ jobs:
         if: matrix.name == 'conda'
         run: |
           conda install -y pip virtualenv
-      - name: Install pusimp
+      - name: Determine default flags for pip install
+        id: determine_pip_install_default_flags
         run: |
           if [[ "${{ matrix.name }}" == "debian" ]]; then
-            BREAK_SYSTEM_PACKAGES_FLAGS="--break-system-packages"
+            echo "pip_install_default_flags=--break-system-packages" >> ${GITHUB_OUTPUT}
           else
-            BREAK_SYSTEM_PACKAGES_FLAGS=""
+            echo "pip_install_default_flags=" >> ${GITHUB_OUTPUT}
           fi
-          INDEX=${{ (inputs || github.event.inputs).index }}
-          if [[ -z "${INDEX}" ]]; then
-            INDEX_FLAGS=""
-            PACKAGE_NAME="."
-            PACKAGE_VERSION=""
-            echo "Installing from current git clone"
-          else
-            if [[ "${INDEX}" == "TestPyPI" ]]; then
-              INDEX_FLAGS="--no-cache-dir --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
-            elif [[ "${INDEX}" == "PyPI" ]]; then
-              INDEX_FLAGS="--no-cache-dir"
-            else
-              echo "Invalid package index" && exit 1
-            fi
-            PACKAGE_NAME="pusimp"
-            INDEX_VERSION=${{ (inputs || github.event.inputs).index_version }}
-            if [[ -n "${INDEX_VERSION}" ]]; then
-              PACKAGE_VERSION="==${INDEX_VERSION}"
-              echo "Installing version ${INDEX_VERSION} from ${INDEX}"
-            else
-              echo "Installing latest version from ${INDEX}"
-            fi
-          fi
-          python3 -m pip install ${BREAK_SYSTEM_PACKAGES_FLAGS} ${INDEX_FLAGS} ${PACKAGE_NAME}[lint,tests]${PACKAGE_VERSION}
-          find tests/data -mindepth 1 -maxdepth 1 -type d -exec python3 -m pip install ${BREAK_SYSTEM_PACKAGES_FLAGS} {} \;
         shell: bash
+      - name: Wait for package index availability (PyPI and TestPyPI only)
+        if: (inputs || github.event.inputs).index != '' && (inputs || github.event.inputs).index_version != ''
+        run: |
+          INDEX=${{ (inputs || github.event.inputs).index }}
+          INDEX_VERSION=${{ (inputs || github.event.inputs).index_version }}
+          PIP_INSTALL_DEFAULT_FLAGS=${{ steps.determine_pip_install_default_flags.outputs.pip_install_default_flags }}
+          PACKAGE_NAME="pusimp"
+          if [[ "${INDEX}" == "TestPyPI" ]]; then
+            INDEX_REPOSITORY_URL=https://test.pypi.org
+          elif [[ "${INDEX}" == "PyPI" ]]; then
+            INDEX_REPOSITORY_URL=https://pypi.org
+          else
+            echo "Invalid package index" && exit 1
+          fi
+          COUNTER=0
+          INDEX_VERSION_FOUND=0
+          while [[ ${INDEX_VERSION_FOUND} -ne 1 ]]; do
+            pip install ${PIP_INSTALL_DEFAULT_FLAGS} --no-cache-dir --index-url ${INDEX_REPOSITORY_URL}/simple/ ${PACKAGE_NAME}== 2> all_${PACKAGE_NAME}_versions || true
+            if grep -q ${INDEX_VERSION} all_${PACKAGE_NAME}_versions; then
+              INDEX_VERSION_FOUND=1
+            fi
+            [[ ${INDEX_VERSION_FOUND} -ne 1 && ${COUNTER} -eq 5 ]] && echo "Giving up on finding version ${INDEX_VERSION} on ${INDEX_REPOSITORY_URL}" && exit 1
+            [[ ${INDEX_VERSION_FOUND} -ne 1 ]] && echo "Cannot find version ${INDEX_VERSION} on ${INDEX_REPOSITORY_URL}, attempt ${COUNTER}: trying again after a short pause" && sleep 10
+            [[ ${INDEX_VERSION_FOUND} -eq 1 ]] && echo "Found version ${INDEX_VERSION} on ${INDEX_REPOSITORY_URL}, attempt ${COUNTER}"
+            COUNTER=$((COUNTER+1))
+          done
+        shell: bash
+      - name: Install pusimp (PyPI and TestPyPI only)
+        if: (inputs || github.event.inputs).index != ''
+        run: |
+          INDEX=${{ (inputs || github.event.inputs).index }}
+          INDEX_VERSION=${{ (inputs || github.event.inputs).index_version }}
+          PIP_INSTALL_DEFAULT_FLAGS=${{ steps.determine_pip_install_default_flags.outputs.pip_install_default_flags }}
+          PACKAGE_NAME="pusimp"
+          if [[ "${INDEX}" == "TestPyPI" ]]; then
+            INDEX_FLAGS="--no-cache-dir --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
+          elif [[ "${INDEX}" == "PyPI" ]]; then
+            INDEX_FLAGS="--no-cache-dir"
+          else
+            echo "Invalid package index" && exit 1
+          fi
+          if [[ -n "${INDEX_VERSION}" ]]; then
+            PACKAGE_VERSION="==${INDEX_VERSION}"
+            echo "Installing version ${INDEX_VERSION} from ${INDEX}"
+          else
+            PACKAGE_VERSION=""
+            echo "Installing latest version from ${INDEX}"
+          fi
+          python3 -m pip install ${PIP_INSTALL_DEFAULT_FLAGS} ${INDEX_FLAGS} ${PACKAGE_NAME}[lint,tests]${PACKAGE_VERSION}
+        shell: bash
+      - name: Install pusimp (git clone only)
+        if: (inputs || github.event.inputs).index == ''
+        run: |
+          PIP_INSTALL_DEFAULT_FLAGS=${{ steps.determine_pip_install_default_flags.outputs.pip_install_default_flags }}
+          python3 -m pip install ${PIP_INSTALL_DEFAULT_FLAGS} .[lint,tests]
+      - name: Install pusimp test data
+        run: |
+          PIP_INSTALL_DEFAULT_FLAGS=${{ steps.determine_pip_install_default_flags.outputs.pip_install_default_flags }}
+          find tests/data -mindepth 1 -maxdepth 1 -type d -exec python3 -m pip install ${PIP_INSTALL_DEFAULT_FLAGS} {} \;
       - name: Clean build files
         run: |
           git clean -xdf
