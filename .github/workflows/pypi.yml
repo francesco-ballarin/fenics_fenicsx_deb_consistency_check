@@ -1,4 +1,4 @@
-name: Publish on PyPI
+name: "Publish on PyPI (internal: use 'Release new version' instead)"
 
 on:
   schedule:
@@ -15,11 +15,6 @@ on:
       index:
         description: "The package index, e.g. PyPI or TestPyPI. Defaults to TestPyPI. Be careful when choosing PyPI, because uploads there cannot be deleted"
         type: string
-    outputs:
-      version:
-        description: "The version of the packaged distributions"
-        value: ${{ jobs.build_distributions.outputs.version }}
-
 
 jobs:
   process_inputs:
@@ -104,6 +99,14 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: ${{ needs.process_inputs.outputs.index_repository_url }}
+
+  test:
+    needs: [process_inputs, build_distributions, publish]
+    uses: python-pusimp/pusimp/.github/workflows/ci.yml@main
+    with:
+      ref: ${{ inputs.ref }}
+      index: ${{ needs.process_inputs.outputs.index }}
+      index_version: ${{ needs.build_distributions.outputs.version }}
 
   warn:
     runs-on: ubuntu-latest
