@@ -10,10 +10,21 @@ on:
   schedule:
     - cron: "0 0 * * WED"
   workflow_dispatch:
+    inputs:
+      index:
+        description: "The package index, e.g. PyPI or TestPyPI, from which to install the package. If empty, the package will not be installed from any package index, but from the current git clone"
+      index_version:
+        description: "The version of the package to be installed from the package index. If empty, the latest version will be installed. Only used when index is non empty."
   workflow_call:
     inputs:
       ref:
         description: "The branch, tag or SHA to checkout"
+        type: string
+      index:
+        description: "The package index, e.g. PyPI or TestPyPI, from which to install the package. If empty, the package will not be installed from any package index, but from the current git clone"
+        type: string
+      index_version:
+        description: "The version of the package to be installed from the package index. If empty, the latest version will be installed. Only used when index is non empty."
         type: string
 
 jobs:
@@ -69,12 +80,35 @@ jobs:
       - name: Install pusimp
         run: |
           if [[ "${{ matrix.name }}" == "debian" ]]; then
-            PIP_FLAGS="--break-system-packages"
+            BREAK_SYSTEM_PACKAGES_FLAGS="--break-system-packages"
           else
-            PIP_FLAGS=""
+            BREAK_SYSTEM_PACKAGES_FLAGS=""
           fi
-          python3 -m pip install ${PIP_FLAGS} .[lint,tests]
-          find tests/data -mindepth 1 -maxdepth 1 -type d -exec python3 -m pip install ${PIP_FLAGS} {} \;
+          INDEX=${{ (inputs || github.event.inputs).index }}
+          if [[ -z "${INDEX}" ]]; then
+            INDEX_FLAGS=""
+            PACKAGE_NAME="."
+            PACKAGE_VERSION=""
+            echo "Installing from current git clone"
+          else
+            if [[ "${INDEX}" == "TestPyPI" ]]; then
+              INDEX_FLAGS="--no-cache-dir --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
+            elif [[ "${INDEX}" == "PyPI" ]]; then
+              INDEX_FLAGS="--no-cache-dir"
+            else
+              echo "Invalid package index" && exit 1
+            fi
+            PACKAGE_NAME="pusimp"
+            INDEX_VERSION=${{ (inputs || github.event.inputs).index_version }}
+            if [[ -n "${INDEX_VERSION}" ]]; then
+              PACKAGE_VERSION="==${INDEX_VERSION}"
+              echo "Installing version ${INDEX_VERSION} from ${INDEX}"
+            else
+              echo "Installing latest version from ${INDEX}"
+            fi
+          fi
+          python3 -m pip install ${BREAK_SYSTEM_PACKAGES_FLAGS} ${INDEX_FLAGS} ${PACKAGE_NAME}[lint,tests]${PACKAGE_VERSION}
+          find tests/data -mindepth 1 -maxdepth 1 -type d -exec python3 -m pip install ${BREAK_SYSTEM_PACKAGES_FLAGS} {} \;
         shell: bash
       - name: Clean build files
         run: |
