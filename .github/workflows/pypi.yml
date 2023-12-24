@@ -13,11 +13,92 @@ on:
       index:
         description: "The package index, e.g. PyPI or TestPyPI. Defaults to TestPyPI. Be careful when choosing PyPI, because uploads there cannot be deleted"
         type: string
+    outputs:
+      version:
+        description: "The version of the packaged distributions"
+        value: ${{ jobs.build_distributions.outputs.version }}
+
 
 jobs:
+  process_inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine package index
+        id: determine_index
+        run: |
+          if [[ -z "${{ (inputs || github.event.inputs).index }}" ]]; then
+            echo "index=TestPyPI" >> ${GITHUB_OUTPUT}
+            echo "index_repository_url=https://test.pypi.org/legacy/" >> ${GITHUB_OUTPUT}
+          else
+            INDEX=${{ (inputs || github.event.inputs).index }}
+            echo "index=${INDEX}" >> ${GITHUB_OUTPUT}
+            if [[ "${INDEX}" == "TestPyPI" ]]; then
+              echo "index_repository_url=https://test.pypi.org/legacy/" >> ${GITHUB_OUTPUT}
+            elif [[ "${INDEX}" == "PyPI" ]]; then
+              echo "index_repository_url=" >> ${GITHUB_OUTPUT}
+            else
+              echo "Invalid package index" && exit 1
+            fi
+          fi
+        shell: bash
+    outputs:
+      index: ${{ steps.determine_index.outputs.index }}
+      index_repository_url: ${{ steps.determine_index.outputs.index_repository_url }}
+
   build_distributions:
+    needs: [process_inputs]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
+      - name: Add current date at the end of the version string (TestPyPI only)
+        if: needs.process_inputs.outputs.index == 'TestPyPI'
+        run: |
+          DATETIME=$(date "+%Y%m%d%H%M%S")
+          sed -i -r "s|version = \"(.*)\"|version = \"\10000${DATETIME}\"|g" pyproject.toml
+      - name: Determine distribution version
+        id: determine_version
+        run: |
+          python3 -m pip install toml
+          VERSION=$(python3 -c 'import toml; print(toml.load("pyproject.toml")["project"]["version"])')
+          echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
+      - name: Disallow publishing development versions (PyPI only)
+        if: needs.process_inputs.outputs.index == 'PyPI'
+        run: |
+          VERSION=${{ steps.determine_version.outputs.version }}
+          if [[ ${VERSION} == *"dev"* ]]; then
+            echo "Cannot publish development version ${VERSION} on PyPI" && exit 1
+          fi
+        shell: bash
+      - name: Build distributions
+        run: pipx run build
+      - name: Upload distributions as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: distributions
+          path: dist/
+      - name: Verify distributions metadata
+        run: pipx run twine check dist/*
+    outputs:
+      version: ${{ steps.determine_version.outputs.version }}
+
+  publish:
+    needs: [process_inputs, build_distributions]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Report version and index which will be used
+        run: |
+          echo "Publishing version ${{ needs.build_distributions.outputs.version }} on ${{ needs.process_inputs.outputs.index }} (repository URL: ${{ needs.process_inputs.outputs.index_repository_url }})."
+      - name: Download distributions from artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: distributions
+          path: dist
+      - name: Publish package distributions
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: ${{ needs.process_inputs.outputs.index_repository_url }}
