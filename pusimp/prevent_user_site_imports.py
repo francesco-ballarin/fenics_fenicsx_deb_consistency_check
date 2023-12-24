@@ -109,7 +109,7 @@ def prevent_user_site_imports(
             user_site_dependencies_error += (
                 f"This typically happens when manually pip install-ing {package_name} dependencies, "
                 f"which end up replacing the installation provided by {system_manager}.\n"
-                f"Please remove manually pip install-ed {package_name} components as follows:\n"
+                f"Please remove manually pip install-ed {package_name} dependencies as follows:\n"
             )
             for (dependency_id, dependency_info) in enumerate(user_site_dependencies):
                 if isinstance(dependency_info, dict):

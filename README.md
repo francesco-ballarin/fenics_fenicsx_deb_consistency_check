@@ -39,7 +39,7 @@ ImportError: The following my_package dependencies were imported from a local pa
 * my_dependency_three: expected in /usr/lib/python3.xy/site-packages/my_dependency_three/__init__.py, but imported from ~/.local/lib/python3.xy/site-packages/my_dependency_three/__init__.py.
 
 This typically happens when manually pip install-ing my_package dependencies, which end up replacing the installation provided by my_apt.
-Please remove manually pip install-ed my_package components as follows:
+Please remove manually pip install-ed my_package dependencies as follows:
 * run 'pip uninstall my-dependency-one' in a terminal, and verify that you are prompted to confirm removal of files in ~/.local/lib/python3.xy/site-packages/my_dependency_one. Additional message for my_dependency_one.
 * run 'pip uninstall my-dependency-two' in a terminal, and verify that you are prompted to confirm removal of files in ~/.local/lib/python3.xy/site-packages/my_dependency_two.
 * run 'pip uninstall my-dependency-three' in a terminal, and verify that you are prompted to confirm removal of files in ~/.local/lib/python3.xy/site-packages/my_dependency_three. Maybe inform the user that my_dependency_three is optional.
