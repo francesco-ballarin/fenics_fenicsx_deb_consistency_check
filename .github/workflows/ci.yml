@@ -66,10 +66,6 @@ jobs:
         if: matrix.name == 'conda'
         run: |
           conda install -y pip virtualenv
-      - name: Patch pyproject.toml to enable installing test data from current git HEAD
-        run: |
-          HEAD=$(git rev-parse HEAD)
-          sed -i "s|https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data|https://github.com/python-pusimp/pusimp.git@${HEAD}#subdirectory=tests/data|g" pyproject.toml
       - name: Install pusimp
         run: |
           if [[ "${{ matrix.name }}" == "debian" ]]; then
@@ -77,12 +73,12 @@ jobs:
           else
             PIP_FLAGS=""
           fi
-          python3 -m pip install ${PIP_FLAGS} .[data,lint,tests]
+          python3 -m pip install ${PIP_FLAGS} .[lint,tests]
+          find tests/data -mindepth 1 -maxdepth 1 -type d -exec python3 -m pip install ${PIP_FLAGS} {} \;
         shell: bash
-      - name: Clean build files and reset pyproject.toml
+      - name: Clean build files
         run: |
           git clean -xdf
-          git checkout -- pyproject.toml
       - name: Run ruff
         run: |
           python3 -m ruff .

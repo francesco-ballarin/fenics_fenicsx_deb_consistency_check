@@ -41,24 +41,6 @@ repository = "https://github.com/francesco-ballarin/pusimp"
 issues = "https://github.com/francesco-ballarin/pusimp/issues"
 
 [project.optional-dependencies]
-data = [
-    "pusimp-dependency-one @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_one",
-    "pusimp-dependency-two @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_two",
-    "pusimp-dependency-three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_three",
-    "pusimp-dependency-four @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_four",
-    "pusimp-dependency-five @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_five",
-    "pusimp-dependency-six @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_dependency_six",
-    "pusimp-golden-source @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_golden_source",
-    "pusimp-package-one @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_one",
-    "pusimp-package-two @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_two",
-    "pusimp-package-three @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_three",
-    "pusimp-package-four @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_four",
-    "pusimp-package-five @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_five",
-    "pusimp-package-six @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_six",
-    "pusimp-package-seven @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_seven",
-    "pusimp-package-eight @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_eight",
-    "pusimp-package-nine @ git+https://github.com/python-pusimp/pusimp.git@main#subdirectory=tests/data/pusimp_package_nine"
-]
 lint = [
     "isort",
     "mypy",
