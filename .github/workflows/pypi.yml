@@ -1,0 +1,23 @@
+name: Publish on PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      index:
+        description: "The package index, e.g. PyPI or TestPyPI. Defaults to TestPyPI. Be careful when choosing PyPI, because uploads there cannot be deleted"
+  workflow_call:
+    inputs:
+      ref:
+        description: "The branch, tag or SHA to checkout"
+        type: string
+      index:
+        description: "The package index, e.g. PyPI or TestPyPI. Defaults to TestPyPI. Be careful when choosing PyPI, because uploads there cannot be deleted"
+        type: string
+
+jobs:
+  build_distributions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
