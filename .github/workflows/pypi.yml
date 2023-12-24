@@ -25,14 +25,14 @@ jobs:
         run: |
           if [[ -z "${{ (inputs || github.event.inputs).index }}" ]]; then
             echo "index=TestPyPI" >> ${GITHUB_OUTPUT}
-            echo "index_repository_url=https://test.pypi.org" >> ${GITHUB_OUTPUT}
+            echo "index_url=https://test.pypi.org" >> ${GITHUB_OUTPUT}
           else
             INDEX=${{ (inputs || github.event.inputs).index }}
             echo "index=${INDEX}" >> ${GITHUB_OUTPUT}
             if [[ "${INDEX}" == "TestPyPI" ]]; then
-              echo "index_repository_url=https://test.pypi.org" >> ${GITHUB_OUTPUT}
+              echo "index_url=https://test.pypi.org" >> ${GITHUB_OUTPUT}
             elif [[ "${INDEX}" == "PyPI" ]]; then
-              echo "index_repository_url=https://pypi.org" >> ${GITHUB_OUTPUT}
+              echo "index_url=https://pypi.org" >> ${GITHUB_OUTPUT}
             else
               echo "Invalid package index" && exit 1
             fi
@@ -40,7 +40,7 @@ jobs:
         shell: bash
     outputs:
       index: ${{ steps.determine_index.outputs.index }}
-      index_repository_url: ${{ steps.determine_index.outputs.index_repository_url }}
+      index_url: ${{ steps.determine_index.outputs.index_url }}
 
   build_distributions:
     needs: [process_inputs]
@@ -89,7 +89,7 @@ jobs:
     steps:
       - name: Report version and index which will be used
         run: |
-          echo "Publishing version ${{ needs.build_distributions.outputs.version }} on ${{ needs.process_inputs.outputs.index }} (repository URL: ${{ needs.process_inputs.outputs.index_repository_url }})."
+          echo "Publishing version ${{ needs.build_distributions.outputs.version }} on ${{ needs.process_inputs.outputs.index }} (index URL: ${{ needs.process_inputs.outputs.index_url }})."
       - name: Download distributions from artifacts
         uses: actions/download-artifact@v3
         with:
@@ -98,7 +98,7 @@ jobs:
       - name: Publish package distributions
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: ${{ needs.process_inputs.outputs.index_repository_url }}/legacy/
+          repository-url: ${{ needs.process_inputs.outputs.index_url }}/legacy/
 
   test:
     needs: [process_inputs, build_distributions, publish]

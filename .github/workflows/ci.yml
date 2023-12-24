@@ -94,22 +94,22 @@ jobs:
           PIP_INSTALL_DEFAULT_FLAGS=${{ steps.determine_pip_install_default_flags.outputs.pip_install_default_flags }}
           PACKAGE_NAME="pusimp"
           if [[ "${INDEX}" == "TestPyPI" ]]; then
-            INDEX_REPOSITORY_URL=https://test.pypi.org
+            INDEX_URL=https://test.pypi.org
           elif [[ "${INDEX}" == "PyPI" ]]; then
-            INDEX_REPOSITORY_URL=https://pypi.org
+            INDEX_URL=https://pypi.org
           else
             echo "Invalid package index" && exit 1
           fi
           COUNTER=0
           INDEX_VERSION_FOUND=0
           while [[ ${INDEX_VERSION_FOUND} -ne 1 ]]; do
-            pip install ${PIP_INSTALL_DEFAULT_FLAGS} --no-cache-dir --index-url ${INDEX_REPOSITORY_URL}/simple/ ${PACKAGE_NAME}== 2> all_${PACKAGE_NAME}_versions || true
+            pip install ${PIP_INSTALL_DEFAULT_FLAGS} --no-cache-dir --index-url ${INDEX_URL}/simple/ ${PACKAGE_NAME}== 2> all_${PACKAGE_NAME}_versions || true
             if grep -q ${INDEX_VERSION} all_${PACKAGE_NAME}_versions; then
               INDEX_VERSION_FOUND=1
             fi
-            [[ ${INDEX_VERSION_FOUND} -ne 1 && ${COUNTER} -eq 5 ]] && echo "Giving up on finding version ${INDEX_VERSION} on ${INDEX_REPOSITORY_URL}" && exit 1
-            [[ ${INDEX_VERSION_FOUND} -ne 1 ]] && echo "Cannot find version ${INDEX_VERSION} on ${INDEX_REPOSITORY_URL}, attempt ${COUNTER}: trying again after a short pause" && sleep 10
-            [[ ${INDEX_VERSION_FOUND} -eq 1 ]] && echo "Found version ${INDEX_VERSION} on ${INDEX_REPOSITORY_URL}, attempt ${COUNTER}"
+            [[ ${INDEX_VERSION_FOUND} -ne 1 && ${COUNTER} -eq 5 ]] && echo "Giving up on finding version ${INDEX_VERSION} on ${INDEX_URL}" && exit 1
+            [[ ${INDEX_VERSION_FOUND} -ne 1 ]] && echo "Cannot find version ${INDEX_VERSION} on ${INDEX_URL}, attempt ${COUNTER}: trying again after a short pause" && sleep 10
+            [[ ${INDEX_VERSION_FOUND} -eq 1 ]] && echo "Found version ${INDEX_VERSION} on ${INDEX_URL}, attempt ${COUNTER}"
             COUNTER=$((COUNTER+1))
           done
         shell: bash
