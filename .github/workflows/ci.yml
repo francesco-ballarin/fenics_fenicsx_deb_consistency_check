@@ -85,13 +85,13 @@ jobs:
           git checkout -- pyproject.toml
       - name: Run ruff
         run: |
-          python3 -m ruff --exclude applications .
+          python3 -m ruff .
       - name: Run isort
         run: |
-          python3 -m isort --check --diff --skip-glob applications .
+          python3 -m isort --check --diff .
       - name: Run mypy
         run: |
-          python3 -m mypy --exclude applications .
+          python3 -m mypy .
       - name: Run yamllint
         run: |
           python3 -m yamllint -d "{extends: default, rules: {document-start: {present: false}, line-length: disable, truthy: {check-keys: false}}}" .

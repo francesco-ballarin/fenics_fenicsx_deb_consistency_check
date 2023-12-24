@@ -35,9 +35,3 @@ A sample error on a configuration with some packages installed on a user-site is
 ```
 TODO -> copy error message
 ```
-
-## Applications
-
-- Preventing user-site imports in `dolfin` and `dolfinx` packaged for Debian/Ubuntu.
-    - `dolfin`: [patch file](https://github.com/python-pusimp/pusimp/blob/main/applications/python3-dolfin/patches/patch_dolfin_init.patch), [unit tests](https://github.com/python-pusimp/pusimp/blob/main/applications/python3-dolfin/tests/unit/test_pusimp.py).
-    - `dolfinx`: [patch file](https://github.com/python-pusimp/pusimp/blob/main/applications/python3-dolfinx/patches/patch_dolfinx_init.patch), [unit tests](https://github.com/python-pusimp/pusimp/blob/main/applications/python3-dolfinx/tests/unit/test_pusimp.py).
