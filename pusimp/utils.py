@@ -180,7 +180,7 @@ class VirtualEnv(object):
 
 
 def assert_package_import_success_without_local_packages(package: str, package_path: str) -> None:
-    """Assert that the package imports correctly without any extra local packages."""
+    """Assert that the package imports correctly without any local packages."""
     assert_package_location(sys.executable, package, package_path)
 
 
@@ -188,8 +188,9 @@ def assert_package_import_errors_with_local_packages(
     package: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
     dependencies_extra_error_message: typing.List[str], pip_uninstall_call: typing.Callable[[str, str], str]
 ) -> None:
-    """Assert that a package fails to import with extra local packages."""
+    """Assert that a package fails to import with local packages, but imports successfully when they are uninstalled."""
     with VirtualEnv() as virtual_env:
+        # Part 1: assert that the package fails to import with local packages
         dependencies_local_paths = []
         for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
             virtual_env.install_package(dependency_pypi_name)
@@ -211,6 +212,13 @@ def assert_package_import_errors_with_local_packages(
         )
         dependencies_error_messages.extend(dependencies_extra_error_message)
         assert_package_import_error(virtual_env.executable, package, dependencies_error_messages, [], True)
+        # Part 2: assert that the package imports successfully as soon as local packages are uninstalled
+        for (dependency_pypi_name, dependency_local_path) in zip(dependencies_pypi_name_only, dependencies_local_paths):
+            dependency_pip_uninstall_call = pip_uninstall_call(dependency_pypi_name, dependency_local_path)
+            if " -y " not in dependency_pip_uninstall_call and " --yes " not in dependency_pip_uninstall_call:
+                dependency_pip_uninstall_call = dependency_pip_uninstall_call.replace(" uninstall ", " uninstall -y ")
+            virtual_env.uninstall_package(dependency_pypi_name, dependency_pip_uninstall_call)
+        assert_has_package(virtual_env.executable, package)
 
 
 def assert_package_import_success_with_allowed_local_packages(
