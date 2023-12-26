@@ -175,9 +175,22 @@ def generate_test_data_pypi_names(import_names: typing.List[str]) -> typing.List
     ]
 
 
-@pytest.mark.parametrize("package_name", ["pusimp_package_one", "pusimp_package_two", "pusimp_package_three"])
-def test_assert_package_import_success_without_local_packages_data_one_two_three(package_name: str) -> None:
-    """Test assert_package_import_success_without_local_packages on the first three mock packages."""
+@pytest.mark.parametrize(
+    "package_name",
+    [
+        "pusimp_package_one",
+        "pusimp_package_two",
+        "pusimp_package_three",
+        # "pusimp_package_four",  # raises ImportError due to mandatory missing dependency
+        "pusimp_package_five",
+        # "pusimp_package_six",  # raises ImportError due to mandatory broken dependency
+        "pusimp_package_seven",
+        # "pusimp_package_eight",  # its dependencies are supposed to always be local
+        # "pusimp_package_nine"  # its dependencies are supposed to always be local
+    ]
+)
+def test_assert_package_import_success_without_local_packages_data(package_name: str) -> None:
+    """Test assert_package_import_success_without_local_packages on mock packages that don't raise errors on import."""
     assert_package_import_success_without_local_packages(
         package_name, os.path.join(pusimp_golden_source.system_path, package_name, "__init__.py")
     )
@@ -198,13 +211,29 @@ def test_assert_package_import_success_without_local_packages_data_one_two_three
         (
             "pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"],
             ["pusimp_dependency_two is mandatory.", "pusimp_dependency_three is optional."]
+        ),
+        # ("pusimp_package_four", [], []), # pusimp_dependency_missing is not installable
+        # ("pusimp_package_five", [], []),  # pusimp_dependency_missing is not installable
+        # ("pusimp_package_six", [], []),  # pusimp_dependency_four is always broken
+        # ("pusimp_package_seven", [], []),  # pusimp_dependency_four is always broken
+        ("pusimp_package_eight", ["pusimp_dependency_five"], ["pusimp_dependency_five is mandatory."]),
+        ("pusimp_package_eight", ["pusimp_dependency_six"], ["pusimp_dependency_six is optional."]),
+        (
+            "pusimp_package_eight", ["pusimp_dependency_five", "pusimp_dependency_six"],
+            ["pusimp_dependency_five is mandatory.", "pusimp_dependency_six is optional."]
+        ),
+        ("pusimp_package_nine", ["pusimp_dependency_five"], ["pusimp_dependency_five is mandatory."]),
+        ("pusimp_package_nine", ["pusimp_dependency_six"], ["pusimp_dependency_six is optional."]),
+        (
+            "pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"],
+            ["pusimp_dependency_five is mandatory.", "pusimp_dependency_six is optional."]
         )
     ]
 )
-def test_assert_package_import_errors_with_local_packages_data_one_two_three(
+def test_assert_package_import_errors_with_local_packages_data(
     package_name: str, dependencies_import_name: typing.List[str], dependencies_extra_error_message: typing.List[str]
 ) -> None:
-    """Test assert_package_import_errors_with_local_packages on the first three mock packages."""
+    """Test assert_package_import_errors_with_local_packages on mock packages."""
     assert_package_import_errors_with_local_packages(
         package_name, dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name),
         dependencies_extra_error_message, lambda dependency_pypi_name, _: f"pip uninstall {dependency_pypi_name}"
@@ -220,13 +249,23 @@ def test_assert_package_import_errors_with_local_packages_data_one_two_three(
         ("pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"]),
         ("pusimp_package_three", ["pusimp_dependency_two"]),
         ("pusimp_package_three", ["pusimp_dependency_three"]),
-        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"])
+        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"]),
+        # ("pusimp_package_four", []), # pusimp_dependency_missing is not installable
+        ("pusimp_package_five", []),
+        # ("pusimp_package_six", []),  # pusimp_dependency_four is always broken
+        ("pusimp_package_seven", []),
+        ("pusimp_package_eight", ["pusimp_dependency_five"]),
+        ("pusimp_package_eight", ["pusimp_dependency_six"]),
+        ("pusimp_package_eight", ["pusimp_dependency_five", "pusimp_dependency_six"]),
+        ("pusimp_package_nine", ["pusimp_dependency_five"]),
+        ("pusimp_package_nine", ["pusimp_dependency_six"]),
+        ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"])
     ]
 )
-def test_assert_package_import_success_with_allowed_local_packages_data_one_two_three(
+def test_assert_package_import_success_with_allowed_local_packages_data(
     package_name: str, dependencies_import_name: typing.List[str]
 ) -> None:
-    """Test assert_package_import_success_with_allowed_local_packages on the first three mock packages."""
+    """Test assert_package_import_success_with_allowed_local_packages on mock packages."""
     assert_package_import_success_with_allowed_local_packages(
         package_name, os.path.join(pusimp_golden_source.system_path, package_name, "__init__.py"),
         dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name)
@@ -236,14 +275,33 @@ def test_assert_package_import_success_with_allowed_local_packages_data_one_two_
 @pytest.mark.parametrize(
     "package_name,dependencies_import_name,dependencies_optional",
     [
+        # ("pusimp_package_one", ["pusimp_dependency_two"], [False]),  # in failure_position
+        # ("pusimp_package_two", ["pusimp_dependency_two"], [False]),  # in failure_position
+        # ("pusimp_package_two", ["pusimp_dependency_three"], [True]),  # in failure_only_optional
+        # (
+        #    "pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]
+        # )  # in failure_position
         ("pusimp_package_three", ["pusimp_dependency_two"], [False]),
-        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True])
+        # ("pusimp_package_three", ["pusimp_dependency_three"], [True]),  # in failure_only_optional
+        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]),
+        # ("pusimp_package_four", [], []), # pusimp_dependency_missing is not installable
+        # ("pusimp_package_five", [], []),  # pusimp_dependency_missing is not installable
+        # ("pusimp_package_six", [], []),  # pusimp_dependency_four is always broken
+        # ("pusimp_package_seven", [], []),  # pusimp_dependency_four is always broken
+        # ("pusimp_package_eight", ["pusimp_dependency_five"], [False]),  # in failure_position
+        # ("pusimp_package_eight", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
+        # (
+        #    "pusimp_package_eight", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True]
+        # )  # in failure_position
+        ("pusimp_package_nine", ["pusimp_dependency_five"], [False]),
+        # ("pusimp_package_nine", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
+        ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])
     ]
 )
-def test_assert_package_import_errors_with_broken_non_optional_packages_data_one_two_three_success(
+def test_assert_package_import_errors_with_broken_non_optional_packages_data_success(
     package_name: str, dependencies_import_name: typing.List[str], dependencies_optional: typing.List[bool]
 ) -> None:
-    """Test success of assert_package_import_errors_with_broken_non_optional_packages on the first three mock packages.
+    """Test success of assert_package_import_errors_with_broken_non_optional_packages on mock packages.
 
     The successful cases are the cases in which dependencies_import_name lists actual mandatory dependencies,
     and the import of the broken dependency happens after the call to pusimp.prevent_user_site_imports.
@@ -258,13 +316,27 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_one
     [
         ("pusimp_package_one", ["pusimp_dependency_two"], [False]),
         ("pusimp_package_two", ["pusimp_dependency_two"], [False]),
-        ("pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True])
+        # ("pusimp_package_two", ["pusimp_dependency_three"], [True]),  # in failure_only_optional
+        ("pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]),
+        # ("pusimp_package_three", ["pusimp_dependency_two"], [False]),  # in success
+        # ("pusimp_package_three", ["pusimp_dependency_three"], [True]),  # in failure_only_optional
+        # ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]),  # in success
+        # ("pusimp_package_four", [], []), # pusimp_dependency_missing is not installable
+        # ("pusimp_package_five", [], []),  # pusimp_dependency_missing is not installable
+        # ("pusimp_package_six", [], []),  # pusimp_dependency_four is always broken
+        # ("pusimp_package_seven", [], []),  # pusimp_dependency_four is always broken
+        ("pusimp_package_eight", ["pusimp_dependency_five"], [False]),
+        # ("pusimp_package_eight", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
+        ("pusimp_package_eight", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])
+        # ("pusimp_package_three", ["pusimp_dependency_five"], [False]),  # in success
+        # ("pusimp_package_three", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
+        # ("pusimp_package_three", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])  # in success
     ]
 )
-def test_assert_package_import_errors_with_broken_non_optional_packages_data_one_two_three_failure_position(
+def test_assert_package_import_errors_with_broken_non_optional_packages_data_failure_position(
     package_name: str, dependencies_import_name: typing.List[str], dependencies_optional: typing.List[bool]
 ) -> None:
-    """Test failure of assert_package_import_errors_with_broken_non_optional_packages on the first three mock packages.
+    """Test failure of assert_package_import_errors_with_broken_non_optional_packages on mock packages.
 
     These failing cases are the cases in which the import of the broken mandatory dependency listed
     in dependencies_import_name happens before the call to pusimp.prevent_user_site_imports.
@@ -284,14 +356,33 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_one
 @pytest.mark.parametrize(
     "package_name,dependencies_import_name,dependencies_optional",
     [
+        # ("pusimp_package_one", ["pusimp_dependency_two"], [False]),  # in failure_position
+        # ("pusimp_package_two", ["pusimp_dependency_two"], [False]),  # in failure_position
         ("pusimp_package_two", ["pusimp_dependency_three"], [True]),
-        ("pusimp_package_three", ["pusimp_dependency_three"], [True])
+        # (
+        #    "pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]
+        # )  # in failure_position
+        # ("pusimp_package_three", ["pusimp_dependency_two"], [False]),  # in success
+        ("pusimp_package_three", ["pusimp_dependency_three"], [True]),
+        # ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]),  # in success
+        # ("pusimp_package_four", [], []), # pusimp_dependency_missing is not installable
+        # ("pusimp_package_five", [], []),  # pusimp_dependency_missing is not installable
+        # ("pusimp_package_six", [], []),  # pusimp_dependency_four is always broken
+        # ("pusimp_package_seven", [], []),  # pusimp_dependency_four is always broken
+        # ("pusimp_package_eight", ["pusimp_dependency_five"], [False]),  # in failure_position
+        ("pusimp_package_eight", ["pusimp_dependency_six"], [True]),
+        # (
+        #    "pusimp_package_eight", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True]
+        # ),  # in failure_position
+        # ("pusimp_package_nine", ["pusimp_dependency_five"], [False]),  # in success
+        ("pusimp_package_nine", ["pusimp_dependency_six"], [True]),
+        # ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])  # in success
     ]
 )
-def test_assert_package_import_errors_with_broken_non_optional_packages_data_one_two_three_failure_only_optional(
+def test_assert_package_import_errors_with_broken_non_optional_packages_data_failure_only_optional(
     package_name: str, dependencies_import_name: typing.List[str], dependencies_optional: typing.List[bool]
 ) -> None:
-    """Test failure of assert_package_import_errors_with_broken_non_optional_packages on the first three mock packages.
+    """Test failure of assert_package_import_errors_with_broken_non_optional_packages on mock packages.
 
     These failing cases are the cases in which only optional dependencies have been listed in dependencies_import_name.
     """
@@ -312,13 +403,23 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_one
         ("pusimp_package_two", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]),
         ("pusimp_package_three", ["pusimp_dependency_two"], [False]),
         ("pusimp_package_three", ["pusimp_dependency_three"], [True]),
-        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True])
+        ("pusimp_package_three", ["pusimp_dependency_two", "pusimp_dependency_three"], [False, True]),
+        # ("pusimp_package_four", [], []), # pusimp_dependency_missing is not installable
+        # ("pusimp_package_five", [], []),  # pusimp_dependency_missing is not installable
+        # ("pusimp_package_six", [], []),  # pusimp_dependency_four is always broken
+        # ("pusimp_package_seven", [], []),  # pusimp_dependency_four is always broken
+        ("pusimp_package_eight", ["pusimp_dependency_five"], [False]),
+        ("pusimp_package_eight", ["pusimp_dependency_six"], [True]),
+        ("pusimp_package_eight", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True]),
+        ("pusimp_package_nine", ["pusimp_dependency_five"], [False]),
+        ("pusimp_package_nine", ["pusimp_dependency_six"], [True]),
+        ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])
     ]
 )
-def test_assert_package_import_success_with_broken_optional_packages_data_one_two_three(
+def test_assert_package_import_success_with_broken_optional_packages_data(
     package_name: str, dependencies_import_name: typing.List[str], dependencies_optional: typing.List[bool]
 ) -> None:
-    """Test success of assert_package_import_success_with_broken_optional_packages on the first three mock packages.
+    """Test success of assert_package_import_success_with_broken_optional_packages on mock packages.
 
     The successful cases are the cases in which dependencies_import_name lists actual optional dependencies.
     """

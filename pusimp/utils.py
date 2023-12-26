@@ -197,11 +197,10 @@ def assert_package_import_errors_with_local_packages(
             dependency_local_path = str(virtual_env.dist_path / dependency_import_name / "__init__.py")
             assert_package_location(virtual_env.executable, dependency_import_name, dependency_local_path)
             dependencies_local_paths.append(dependency_local_path)
-        dependencies_error_messages = ["Dependencies imported from a local path"]
-        dependencies_error_messages.extend(
+        dependencies_error_messages = [
             f"* {dependency_import_name} was imported from a local path: expected in"
             for dependency_import_name in dependencies_import_name
-        )
+        ]
         dependencies_pypi_name_only = [
             dependency_pypi_name.replace("'", "").split("@")[0].strip()  # from 'name @ git+url' to name
             for dependency_pypi_name in dependencies_pypi_name

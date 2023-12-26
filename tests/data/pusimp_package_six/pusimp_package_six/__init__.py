@@ -6,7 +6,7 @@
 """Mock package for pusimp tests.
 
 This package imports pusimp_dependency_one and pusimp_dependency_four.
-pusimp_dependency_missing is a mandatory dependency and will always raise an error, and therefore
+pusimp_dependency_four is a mandatory dependency and will always raise an error, and therefore
 this package will raise an ImportError on import.
 """
 

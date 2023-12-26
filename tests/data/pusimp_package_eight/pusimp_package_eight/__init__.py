@@ -8,6 +8,9 @@
 This package imports pusimp_dependency_five and pusimp_dependency_six.
 pusimp_dependency_five is a mandatory dependency, while pusimp_dependency_six is an optional dependency.
 Both dependencies will always be marked as imported from a user site.
+
+The main difference compared to pusimp_package_two and pusimp_package_three is that their dependencies
+there will sometimes be imported from a user site, while here the dependencies are always imported from a user site.
 """
 
 import pusimp_dependency_five  # noqa: F401
