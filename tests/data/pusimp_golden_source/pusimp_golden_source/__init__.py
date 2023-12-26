@@ -13,3 +13,8 @@ import os
 contact_url = "mock contact URL"
 system_path = os.path.dirname(os.path.dirname(__file__))
 system_package_manager = "mock system package manager"
+
+
+def pip_uninstall_call(dependency_pypi_name: str, dependency_actual_path: str) -> str:
+    """Report to the user how to uninstall a dependency with pip."""
+    return f"pip uninstall {dependency_pypi_name}"

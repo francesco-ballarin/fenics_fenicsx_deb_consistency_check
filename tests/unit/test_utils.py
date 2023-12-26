@@ -135,7 +135,7 @@ def test_assert_package_import_errors_with_local_packages_data_one_two_three(
     """Test assert_package_import_errors_with_local_packages on the first three mock packages."""
     assert_package_import_errors_with_local_packages(
         package_name, dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name),
-        dependencies_extra_error_message
+        dependencies_extra_error_message, lambda dependency_pypi_name, _: f"pip uninstall {dependency_pypi_name}"
     )
 
 

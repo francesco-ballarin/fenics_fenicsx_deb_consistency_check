@@ -28,7 +28,8 @@ pusimp.prevent_user_site_imports(
         "Additional message for my_dependency_one.",
         "",
         "Maybe inform the user that my_dependency_three is optional."
-    ]
+    ],
+    lambda dependency_pypi_name, dependency_actual_path: f"pip uninstall {dependency_pypi_name}"
 )
 ```
 A sample error on a configuration with all dependencies installed on a user-site is the following (the terminal will automatically handle line wrapping of long lines):

@@ -20,7 +20,8 @@ pusimp.prevent_user_site_imports(
     ["pusimp_dependency_one", "pusimp_dependency_missing"],
     ["pusimp-dependency-one", "pusimp-dependency-missing"],
     [False, True],
-    ["", ""]
+    ["", ""],
+    pusimp_golden_source.pip_uninstall_call
 )
 
 import pusimp_dependency_one  # noqa: E402, F401

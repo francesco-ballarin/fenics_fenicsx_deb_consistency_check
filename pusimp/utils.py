@@ -165,16 +165,16 @@ def assert_package_import_success_without_local_packages(package: str, package_p
 
 def assert_package_import_errors_with_local_packages(
     package: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
-    dependencies_extra_error_message: typing.List[str]
+    dependencies_extra_error_message: typing.List[str], pip_uninstall_call: typing.Callable[[str, str], str]
 ) -> None:
     """Assert that a package fails to import with extra local packages."""
     with VirtualEnv() as virtual_env:
+        dependencies_local_paths = []
         for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
             virtual_env.install_package(dependency_pypi_name)
-            assert_package_location(
-                virtual_env.executable, dependency_import_name,
-                str(virtual_env.dist_path / dependency_import_name / "__init__.py")
-            )
+            dependency_local_path = str(virtual_env.dist_path / dependency_import_name / "__init__.py")
+            assert_package_location(virtual_env.executable, dependency_import_name, dependency_local_path)
+            dependencies_local_paths.append(dependency_local_path)
         dependencies_error_messages = ["dependencies were imported from a local path"]
         dependencies_error_messages.extend(
             f"* {dependency_import_name}: expected in" for dependency_import_name in dependencies_import_name
@@ -184,7 +184,9 @@ def assert_package_import_errors_with_local_packages(
             for dependency_pypi_name in dependencies_pypi_name
         ]
         dependencies_error_messages.extend(
-            f"* run 'pip uninstall {dependency_pypi_name}' in" for dependency_pypi_name in dependencies_pypi_name_only
+            f"* run '{pip_uninstall_call(dependency_pypi_name, dependency_local_path)}' in"
+            for (dependency_pypi_name, dependency_local_path) in zip(
+                dependencies_pypi_name_only, dependencies_local_paths)
         )
         dependencies_error_messages.extend(dependencies_extra_error_message)
         assert_package_import_error(virtual_env.executable, package, dependencies_error_messages, [], True)

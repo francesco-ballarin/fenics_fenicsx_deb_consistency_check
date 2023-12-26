@@ -19,7 +19,8 @@ pusimp.prevent_user_site_imports(
     ["pusimp_dependency_five", "pusimp_dependency_six"],
     ["pusimp-dependency-five", "pusimp-dependency-six"],
     [False, True],
-    ["pusimp_dependency_five is mandatory.", "pusimp_dependency_six is optional."]
+    ["pusimp_dependency_five is mandatory.", "pusimp_dependency_six is optional."],
+    pusimp_golden_source.pip_uninstall_call
 )
 
 import pusimp_dependency_five  # noqa: E402, F401

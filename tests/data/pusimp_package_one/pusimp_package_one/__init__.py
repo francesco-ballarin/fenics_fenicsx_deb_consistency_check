@@ -21,5 +21,6 @@ pusimp.prevent_user_site_imports(
     ["pusimp_dependency_one", "pusimp_dependency_two"],
     ["pusimp-dependency-one", "pusimp-dependency-two"],
     [False, False],
-    ["", "pusimp_dependency_two is mandatory."]
+    ["", "pusimp_dependency_two is mandatory."],
+    pusimp_golden_source.pip_uninstall_call
 )

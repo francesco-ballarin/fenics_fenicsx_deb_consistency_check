@@ -18,7 +18,8 @@ def prevent_user_site_imports(
     dependencies_import_name: typing.List[str],
     dependencies_pypi_name: typing.List[str],
     dependencies_optional: typing.List[bool],
-    dependencies_extra_error_message: typing.List[str]
+    dependencies_extra_error_message: typing.List[str],
+    pip_uninstall_call: typing.Callable[[str, str], str]
 ) -> None:
     """
     Prevent user-site imports on a specific set of dependencies.
@@ -52,6 +53,10 @@ def prevent_user_site_imports(
     dependencies_extra_error_message
         Additional text, corresponding to each dependency, to be added in the error message.
         This information is only employed to prepare the text of error messages.
+    pip_uninstall_call
+        A function that, given the pypi name of a dependency of the package and the path it has
+        actually been imported from, returns the string to be reported to the user on how to
+        uninstall it with pip.
 
     Raises
     ------
@@ -114,8 +119,9 @@ def prevent_user_site_imports(
             for (dependency_id, dependency_info) in enumerate(user_site_dependencies):
                 if isinstance(dependency_info, dict):
                     user_site_dependencies_error += (
-                        f"* run 'pip uninstall {dependencies_pypi_name[dependency_id]}' in a terminal, "
-                        "and verify that you are prompted to confirm removal of files in "
+                        "* run "
+                        f"'{pip_uninstall_call(dependencies_pypi_name[dependency_id], dependency_info['actual'])}' "
+                        "in a terminal, and verify that you are prompted to confirm removal of files in "
                         f"{os.path.dirname(dependency_info['actual'])}. "
                         f"{dependencies_extra_error_message[dependency_id]}\n"
                     )
