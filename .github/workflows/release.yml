@@ -94,9 +94,9 @@ jobs:
     uses: python-pusimp/pusimp/.github/workflows/pypi.yml@main
     with:
       ref: v${{ github.event.inputs.version }}
-      index: TestPyPI
+      index: PyPI
     secrets:
-      TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
   push_to_repo_and_cleanup:
     needs: [publish_release_to_pypi]
