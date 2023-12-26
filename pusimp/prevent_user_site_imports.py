@@ -72,70 +72,116 @@ def prevent_user_site_imports(
     allow_user_site_imports_env_value = os.getenv(allow_user_site_imports_env_name) is not None
 
     if not allow_user_site_imports_env_value:
-        user_site_dependencies: typing.List[
-            typing.Optional[typing.Dict[str, str]]
-        ] = [None] * len(dependencies_import_name)
+        missing_dependencies: typing.List[typing.Optional[str]] = [None] * len(dependencies_import_name)
+        broken_dependencies: typing.List[typing.Optional[typing.Dict[str, str]]] = [
+            None] * len(dependencies_import_name)
+        user_site_dependencies: typing.List[typing.Optional[typing.Dict[str, str]]] = [
+            None] * len(dependencies_import_name)
         for (dependency_id, dependency_import_name) in enumerate(dependencies_import_name):
             dependency_module_expected_path = f"{dependencies_expected_prefix}/{dependency_import_name}/__init__.py"
-            broken_dependencies_error = (
-                f"{dependency_import_name} is MISSING_OR_BROKEN."
-            )
             if not os.path.exists(dependency_module_expected_path) and not dependencies_optional[dependency_id]:
-                raise ImportError(
-                    broken_dependencies_error.replace(
-                        "MISSING_OR_BROKEN", f"missing. Its expected path was {dependency_module_expected_path}"))
-            try:
-                dependency_module = importlib.import_module(dependency_import_name)
-            except BaseException as dependency_module_import_error:
-                if not dependencies_optional[dependency_id]:
-                    raise ImportError(
-                        broken_dependencies_error.replace(
-                            "MISSING_OR_BROKEN", f"broken. Error on import was '{dependency_module_import_error}'"))
+                missing_dependencies[dependency_id] = dependency_module_expected_path
             else:
-                if dependency_module.__file__ != dependency_module_expected_path:
-                    assert dependency_module.__file__ is not None, f"Unable to find location of {dependency_module}"
-                    user_site_dependencies[dependency_id] = {
-                        "expected": dependency_module_expected_path,
-                        "actual": dependency_module.__file__
-                    }
+                try:
+                    dependency_module = importlib.import_module(dependency_import_name)
+                except BaseException as dependency_module_import_error:
+                    if not dependencies_optional[dependency_id]:
+                        broken_dependencies[dependency_id] = {
+                            "expected": dependency_module_expected_path,
+                            "error": str(dependency_module_import_error)
+                        }
+                else:
+                    if dependency_module.__file__ != dependency_module_expected_path:
+                        assert dependency_module.__file__ is not None, f"Unable to find location of {dependency_module}"
+                        user_site_dependencies[dependency_id] = {
+                            "expected": dependency_module_expected_path,
+                            "actual": dependency_module.__file__
+                        }
 
-        if any([isinstance(dependency_info, dict) for dependency_info in user_site_dependencies]):
-            user_site_dependencies_error = (
-                f"The following {package_name} dependencies were imported from a local path:\n"
-            )
-            for (dependency_id, dependency_info) in enumerate(user_site_dependencies):
-                if isinstance(dependency_info, dict):
-                    user_site_dependencies_error += (
-                        f"* {dependencies_import_name[dependency_id]}: expected in {dependency_info['expected']}, "
-                        f"but imported from {dependency_info['actual']}.\n"
+        counter_error_categories = 1
+
+        missing_dependencies_error = ""
+        missing_dependencies_fix = ""
+        if any([isinstance(dependency_expected_path, str) for dependency_expected_path in missing_dependencies]):
+            missing_dependencies_error += f"{counter_error_categories}) Missing dependencies:\n"
+            for (dependency_id, dependency_expected_path) in enumerate(missing_dependencies):
+                if isinstance(dependency_expected_path, str):
+                    missing_dependencies_error += (
+                        f"* {dependencies_import_name[dependency_id]} is missing. "
+                        f"Its expected path was {dependency_expected_path}.\n"
                     )
+            missing_dependencies_fix += f"{counter_error_categories}) To install missing dependencies:\n"
+            for (dependency_id, dependency_expected_path) in enumerate(missing_dependencies):
+                if isinstance(dependency_expected_path, str):
+                    missing_dependencies_fix += (
+                        f"* check how to install {dependencies_import_name[dependency_id]} "
+                        f"with {system_manager}.\n"
+                    )
+            counter_error_categories += 1
 
-            user_site_dependencies_error += "\n"
+        broken_dependencies_error = ""
+        broken_dependencies_fix = ""
+        if any([isinstance(dependency_info, dict) for dependency_info in broken_dependencies]):
+            broken_dependencies_error += f"{counter_error_categories}) Broken dependencies:\n"
+            for (dependency_id, dependency_info) in enumerate(broken_dependencies):
+                if isinstance(dependency_info, dict):
+                    broken_dependencies_error += (
+                        f"* {dependencies_import_name[dependency_id]} is broken. "
+                        f"Error on import was '{dependency_info['error']}'.\n"
+                    )
+            broken_dependencies_fix += f"{counter_error_categories}) To fix broken dependencies:\n"
+            for (dependency_id, dependency_info) in enumerate(broken_dependencies):
+                if isinstance(dependency_info, dict):
+                    broken_dependencies_fix += (
+                        f"* run 'pip show {dependencies_pypi_name[dependency_id]}' in a terminal: "
+                        f"if the location field is not {os.path.dirname(os.path.dirname(dependency_info['expected']))} "
+                        f"consider running "
+                        f"'{pip_uninstall_call(dependencies_pypi_name[dependency_id], 'unknown')}' "
+                        "in a terminal, because the broken dependency is probably being imported from a local path "
+                        f"rather than from the path provided by {system_manager}. "
+                        f"{dependencies_extra_error_message[dependency_id]}\n"
+                    )
+            counter_error_categories += 1
+
+        user_site_dependencies_error = ""
+        user_site_dependencies_fix = ""
+        if any([isinstance(dependency_info, dict) for dependency_info in user_site_dependencies]):
             user_site_dependencies_error += (
-                f"This typically happens when manually pip install-ing {package_name} dependencies, "
-                f"which end up replacing the installation provided by {system_manager}.\n"
-                f"Please remove manually pip install-ed {package_name} dependencies as follows:\n"
+                f"{counter_error_categories}) Dependencies imported from a local path rather than from "
+                f"the path provided by {system_manager}:\n"
             )
             for (dependency_id, dependency_info) in enumerate(user_site_dependencies):
                 if isinstance(dependency_info, dict):
                     user_site_dependencies_error += (
+                        f"* {dependencies_import_name[dependency_id]} was imported from a local path: "
+                        f"expected in {dependency_info['expected']}, but imported from {dependency_info['actual']}.\n"
+                    )
+            user_site_dependencies_fix += f"{counter_error_categories}) To uninstall local dependencies:\n"
+            for (dependency_id, dependency_info) in enumerate(user_site_dependencies):
+                if isinstance(dependency_info, dict):
+                    user_site_dependencies_fix += (
                         "* run "
                         f"'{pip_uninstall_call(dependencies_pypi_name[dependency_id], dependency_info['actual'])}' "
                         "in a terminal, and verify that you are prompted to confirm removal of files in "
                         f"{os.path.dirname(dependency_info['actual'])}. "
                         f"{dependencies_extra_error_message[dependency_id]}\n"
                     )
+            counter_error_categories += 1
 
-            user_site_dependencies_error += "\n"
-            user_site_dependencies_error += (
-                f"If you are sure that you want to use manually pip install-ed {package_name} dependencies "
-                f"instead of the ones provided by {system_manager}, you can disable this check by exporting the "
-                f"{allow_user_site_imports_env_name} environment variable. Note, however, that this may "
-                f"break the installation provided by {system_manager}.\n"
+        if counter_error_categories > 1:
+            import_error = (
+                f"pusimp has detected the following problems with {package_name} dependencies:\n"
+                f"{missing_dependencies_error}"
+                f"{broken_dependencies_error}"
+                f"{user_site_dependencies_error}"
+                "\n"
+                "pusimp suggests to apply all of the following fixes:\n"
+                f"{missing_dependencies_fix}"
+                f"{broken_dependencies_fix}"
+                f"{user_site_dependencies_fix}"
+                "\n"
+                f"You can disable this check by exporting the {allow_user_site_imports_env_name} environment "
+                f"variable. Note, however, that this may break the installation provided by {system_manager}.\n"
+                f"If you believe that this message appears incorrectly, report this at {contact_url} ."
             )
-            user_site_dependencies_error += (
-                "If you believe that this message appears incorrectly, "
-                f"report this at {contact_url} ."
-            )
-
-            raise ImportError(user_site_dependencies_error)
+            raise ImportError(import_error)

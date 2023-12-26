@@ -275,8 +275,8 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_one
         )
     assertion_error_text = str(excinfo.value)
     assert assertion_error_text.startswith(
-        f"{dependencies_import_name[0]} is broken was not found in the ImportError text, namely "
-        f"Importing {package_name} was not successful"
+        f"'* {dependencies_import_name[0]} is broken' was not found in the ImportError text, namely "
+        f"'Importing {package_name} was not successful"
     )
     assert f"{dependencies_import_name[0]} was purposely broken" in assertion_error_text
 

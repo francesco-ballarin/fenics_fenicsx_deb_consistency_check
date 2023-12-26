@@ -75,10 +75,15 @@ def test_data_four() -> None:
         import pusimp_package_four  # noqa: F401
     import_error_text = str(excinfo.value)
     print(f"The following ImportError was raised:\n{import_error_text}")
-    assert import_error_text == (
-        "pusimp_dependency_missing is missing. Its expected path was "
+    assert "pusimp has detected the following problems with pusimp_package_four dependencies" in import_error_text
+    assert "Missing dependencies:" in import_error_text
+    assert (
+        "* pusimp_dependency_missing is missing. Its expected path was "
         f"{os.path.join(pusimp_golden_source.system_path, 'pusimp_dependency_missing', '__init__.py')}."
-    )
+    ) in import_error_text
+    assert "To install missing dependencies:" in import_error_text
+    assert "* check how to install pusimp_dependency_missing with mock system package manager" in import_error_text
+    assert "believe that this message appears incorrectly, report this at mock contact URL ." in import_error_text
 
 
 def test_data_five() -> None:
@@ -92,9 +97,19 @@ def test_data_six() -> None:
         import pusimp_package_six  # noqa: F401
     import_error_text = str(excinfo.value)
     print(f"The following ImportError was raised:\n{import_error_text}")
-    assert import_error_text == (
+    assert "pusimp has detected the following problems with pusimp_package_six dependencies" in import_error_text
+    assert "Broken dependencies:" in import_error_text
+    assert (
         "pusimp_dependency_four is broken. Error on import was 'pusimp_dependency_four is a broken package.'."
-    )
+    ) in import_error_text
+    assert "To fix broken dependencies:" in import_error_text
+    assert (
+        "* run 'pip show pusimp-dependency-four' in a terminal: if the location field is not "
+        f"{pusimp_golden_source.system_path} consider running 'pip uninstall pusimp-dependency-four' in a terminal, "
+        "because the broken dependency is probably being imported from a local path rather than from the path "
+        "provided by mock system package manager."
+    ) in import_error_text
+    assert "believe that this message appears incorrectly, report this at mock contact URL ." in import_error_text
 
 
 def test_data_seven() -> None:
@@ -126,17 +141,19 @@ def test_data_eight_nine() -> None:
             import_error_text = str(excinfo.value)
             print(f"The following ImportError was raised:\n{import_error_text}")
             assert (
-                f"The following {pusimp_package} dependencies were imported from a local path" in import_error_text)
+                f"pusimp has detected the following problems with {pusimp_package} dependencies"
+            ) in import_error_text
             assert (
-                "which end up replacing the installation provided by mock system package manager" in import_error_text)
-            assert (
-                "believe that this message appears incorrectly, report this at mock contact URL ." in import_error_text)
+                "Dependencies imported from a local path rather than from the path provided by "
+                "mock system package manager:"
+            ) in import_error_text
+            assert "To uninstall local dependencies:" in import_error_text
             for (dependency_import_name, dependency_optional_string) in (
                 ("pusimp_dependency_five", "mandatory"),
                 ("pusimp_dependency_six", "optional")
             ):
                 assert (
-                    f"* {dependency_import_name}: expected in "
+                    f"* {dependency_import_name} was imported from a local path: expected in "
                     f"{os.path.join(mock_system_site_path, dependency_import_name, '__init__.py')}, "
                     f"but imported from "
                     f"{os.path.join(mock_user_site_path, dependency_import_name, '__init__.py')}."
@@ -148,6 +165,9 @@ def test_data_eight_nine() -> None:
                     f"{os.path.join(mock_user_site_path, dependency_import_name)}. "
                     f"{dependency_import_name} is {dependency_optional_string}."
                 ) in import_error_text
+            assert (
+                "believe that this message appears incorrectly, report this at mock contact URL ."
+            ) in import_error_text
     finally:
         del sys.path[0]
         shutil.rmtree(mock_user_site_path, ignore_errors=True)

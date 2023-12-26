@@ -67,11 +67,11 @@ def assert_package_import_error(
         print(f"Package {package} did fail to import with error:\n{import_error_text}")
     for expected_ in expected:
         assert expected_ in import_error_text, (
-            f"{expected_} was not found in the ImportError text, namely {import_error_text}"
+            f"'{expected_}' was not found in the ImportError text, namely '{import_error_text}'"
         )
     for not_expected_ in not_expected:
         assert not_expected_ not in import_error_text, (
-            f"{not_expected_} was unexpectedly found in the ImportError text, namely {import_error_text}"
+            f"'{not_expected_}' was unexpectedly found in the ImportError text, namely '{import_error_text}'"
         )
 
 
@@ -197,9 +197,10 @@ def assert_package_import_errors_with_local_packages(
             dependency_local_path = str(virtual_env.dist_path / dependency_import_name / "__init__.py")
             assert_package_location(virtual_env.executable, dependency_import_name, dependency_local_path)
             dependencies_local_paths.append(dependency_local_path)
-        dependencies_error_messages = ["dependencies were imported from a local path"]
+        dependencies_error_messages = ["Dependencies imported from a local path"]
         dependencies_error_messages.extend(
-            f"* {dependency_import_name}: expected in" for dependency_import_name in dependencies_import_name
+            f"* {dependency_import_name} was imported from a local path: expected in"
+            for dependency_import_name in dependencies_import_name
         )
         dependencies_pypi_name_only = [
             dependency_pypi_name.replace("'", "").split("@")[0].strip()  # from 'name @ git+url' to name
@@ -250,12 +251,12 @@ def assert_package_import_errors_with_broken_non_optional_packages(
                     [f"{dependency_import_name} was purposely broken."], [], False
                 )
         dependencies_expected_error_messages = [
-            f"{dependency_import_name} is broken"
+            f"* {dependency_import_name} is broken"
             for (dependency_import_name, dependency_optional) in zip(dependencies_import_name, dependencies_optional)
             if not dependency_optional
         ]
         dependencies_not_expected_error_messages = [
-            f"{dependency_import_name} is broken"
+            f"* {dependency_import_name} is broken"
             for (dependency_import_name, dependency_optional) in zip(dependencies_import_name, dependencies_optional)
             if dependency_optional
         ]
