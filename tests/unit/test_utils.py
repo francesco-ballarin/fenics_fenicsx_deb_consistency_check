@@ -115,6 +115,56 @@ def test_break_package_in_virtual_env() -> None:
         assert_package_location(sys.executable, "pytest", pytest.__file__)
 
 
+def test_uninstall_package_in_virtual_env_success() -> None:
+    """Test that uninstalling a package in a virtual environment is successful."""
+    with VirtualEnv() as virtual_env:
+        virtual_env.install_package("my-empty-package")
+        assert_package_location(
+            virtual_env.executable, "my_empty_package", str(virtual_env.dist_path / "my_empty_package" / "__init__.py")
+        )
+        virtual_env.uninstall_package("my-empty-package")
+        assert_package_import_error(
+            virtual_env.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
+        )
+        assert_package_import_error(
+            sys.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
+        )
+
+
+def test_uninstall_package_in_virtual_env_custom_call_success() -> None:
+    """Test that uninstalling a package in a virtual environment with a custom uninstallation call is successful."""
+    with VirtualEnv() as virtual_env:
+        virtual_env.install_package("my-empty-package")
+        assert_package_location(
+            virtual_env.executable, "my_empty_package", str(virtual_env.dist_path / "my_empty_package" / "__init__.py")
+        )
+        virtual_env.uninstall_package("my-empty-package", "pip uninstall -y my-empty-package")
+        assert_package_import_error(
+            virtual_env.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
+        )
+        assert_package_import_error(
+            sys.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
+        )
+
+
+def test_uninstall_package_in_virtual_env_failure() -> None:
+    """Test that uninstalling a package in a virtual environment is failing when the package was never installed."""
+    with VirtualEnv() as virtual_env:
+        with pytest.raises(RuntimeError) as excinfo:
+            virtual_env.uninstall_package("not-installed-package")
+        runtime_error_text = str(excinfo.value)
+        assert runtime_error_text.startswith("Uninstalling not-installed-package was not successful")
+
+
+def test_uninstall_package_in_virtual_env_custom_call_failure() -> None:
+    """Test that uninstalling a package in a virtual environment is failing when passing a wrong custom call."""
+    with VirtualEnv() as virtual_env:
+        with pytest.raises(RuntimeError) as excinfo:
+            virtual_env.uninstall_package("not-really-used", "pip uninstall --this-option-does-not-exist")
+        runtime_error_text = str(excinfo.value)
+        assert runtime_error_text.startswith("Uninstalling not-really-used was not successful")
+
+
 def generate_test_data_pypi_names(import_names: typing.List[str]) -> typing.List[str]:
     """Replace underscore with dash in import names, and add installation from local directory."""
     pypi_names = [import_name.replace("_", "-") for import_name in import_names]

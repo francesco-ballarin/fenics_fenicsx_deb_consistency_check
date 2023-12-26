@@ -158,6 +158,26 @@ class VirtualEnv(object):
         with (self.dist_path / package / "__init__.py").open("w") as init_file:
             init_file.write(f"raise ImportError('{package} was purposely broken.')")
 
+    def uninstall_package(self, package: str, uninstall_call: typing.Optional[str] = None) -> None:
+        """Uninstall a package from the virtual environment."""
+        if uninstall_call is None:
+            uninstall_call = f"pip uninstall --yes --break-system-packages {package}"
+        run_uninstall = subprocess.run(f"{self.executable} -m {uninstall_call}", shell=True, capture_output=True)
+        if (
+            run_uninstall.returncode != 0
+                or
+            (
+                run_uninstall.returncode == 0
+                    and
+                f"WARNING: Skipping {package} as it is not installed" in run_uninstall.stderr.decode()
+            )
+        ):
+            raise RuntimeError(
+                f"Uninstalling {package} was not successful.\n"
+                f"stdout contains {run_uninstall.stdout.decode()}\n"
+                f"stderr contains {run_uninstall.stderr.decode()}"
+            )
+
 
 def assert_package_import_success_without_local_packages(package: str, package_path: str) -> None:
     """Assert that the package imports correctly without any extra local packages."""
