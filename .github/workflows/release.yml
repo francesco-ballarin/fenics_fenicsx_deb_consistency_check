@@ -97,6 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Delete branch pre release
         run: |
@@ -122,7 +123,7 @@ jobs:
           CALLING_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
           git checkout ${POST_BRANCH_NAME}
           git checkout ${CALLING_BRANCH_NAME}
-          git merge ${POST_BRANCH_NAME}
+          git merge --ff-only ${POST_BRANCH_NAME}
           git branch -D ${POST_BRANCH_NAME}
           git push origin -d ${POST_BRANCH_NAME}
           git push origin ${CALLING_BRANCH_NAME}
