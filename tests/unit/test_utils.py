@@ -186,7 +186,8 @@ def generate_test_data_pypi_names(import_names: typing.List[str]) -> typing.List
         # "pusimp_package_six",  # raises ImportError due to mandatory broken dependency
         "pusimp_package_seven",
         # "pusimp_package_eight",  # its dependencies are supposed to always be local
-        # "pusimp_package_nine"  # its dependencies are supposed to always be local
+        # "pusimp_package_nine",  # its dependencies are supposed to always be local
+        # "pusimp_package_ten",  # its dependencies are supposed to either always local, missing or broken
     ]
 )
 def test_assert_package_import_success_without_local_packages_data(package_name: str) -> None:
@@ -228,6 +229,9 @@ def test_assert_package_import_success_without_local_packages_data(package_name:
             "pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"],
             ["pusimp_dependency_five is mandatory.", "pusimp_dependency_six is optional."]
         )
+        # (
+        #    "pusimp_package_ten", [], []
+        # )  # pusimp_dependency_missing is not installable, pusimp_dependency_four is always broken
     ]
 )
 def test_assert_package_import_errors_with_local_packages_data(
@@ -260,6 +264,9 @@ def test_assert_package_import_errors_with_local_packages_data(
         ("pusimp_package_nine", ["pusimp_dependency_five"]),
         ("pusimp_package_nine", ["pusimp_dependency_six"]),
         ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"])
+        # (
+        #    "pusimp_package_ten", [], []
+        # ), # pusimp_dependency_missing is not installable, pusimp_dependency_four is always broken
     ]
 )
 def test_assert_package_import_success_with_allowed_local_packages_data(
@@ -296,6 +303,9 @@ def test_assert_package_import_success_with_allowed_local_packages_data(
         ("pusimp_package_nine", ["pusimp_dependency_five"], [False]),
         # ("pusimp_package_nine", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
         ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])
+        # (
+        #    "pusimp_package_ten", [], []
+        # ), # pusimp_dependency_missing is not installable, pusimp_dependency_four is always broken
     ]
 )
 def test_assert_package_import_errors_with_broken_non_optional_packages_data_success(
@@ -328,9 +338,12 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_suc
         ("pusimp_package_eight", ["pusimp_dependency_five"], [False]),
         # ("pusimp_package_eight", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
         ("pusimp_package_eight", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])
-        # ("pusimp_package_three", ["pusimp_dependency_five"], [False]),  # in success
-        # ("pusimp_package_three", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
-        # ("pusimp_package_three", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])  # in success
+        # ("pusimp_package_nine", ["pusimp_dependency_five"], [False]),  # in success
+        # ("pusimp_package_nine", ["pusimp_dependency_six"], [True]),  # in failure_only_optional
+        # ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])  # in success
+        # (
+        #    "pusimp_package_ten", [], []
+        # ), # pusimp_dependency_missing is not installable, pusimp_dependency_four is always broken
     ]
 )
 def test_assert_package_import_errors_with_broken_non_optional_packages_data_failure_position(
@@ -377,6 +390,9 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_fai
         # ("pusimp_package_nine", ["pusimp_dependency_five"], [False]),  # in success
         ("pusimp_package_nine", ["pusimp_dependency_six"], [True]),
         # ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])  # in success
+        # (
+        #    "pusimp_package_ten", [], []
+        # ), # pusimp_dependency_missing is not installable, pusimp_dependency_four is always broken
     ]
 )
 def test_assert_package_import_errors_with_broken_non_optional_packages_data_failure_only_optional(
@@ -414,6 +430,9 @@ def test_assert_package_import_errors_with_broken_non_optional_packages_data_fai
         ("pusimp_package_nine", ["pusimp_dependency_five"], [False]),
         ("pusimp_package_nine", ["pusimp_dependency_six"], [True]),
         ("pusimp_package_nine", ["pusimp_dependency_five", "pusimp_dependency_six"], [False, True])
+        # (
+        #    "pusimp_package_ten", [], []
+        # ), # pusimp_dependency_missing is not installable, pusimp_dependency_four is always broken
     ]
 )
 def test_assert_package_import_success_with_broken_optional_packages_data(
