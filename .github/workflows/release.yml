@@ -79,6 +79,8 @@ jobs:
     with:
       ref: v${{ github.event.inputs.version }}
       index: TestPyPI
+    secrets:
+      TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
 
   publish_release_to_pypi:
     needs: [publish_release_to_testpypi]
@@ -86,6 +88,8 @@ jobs:
     with:
       ref: v${{ github.event.inputs.version }}
       index: TestPyPI
+    secrets:
+      TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
 
   push_to_repo_and_cleanup:
     needs: [publish_release_to_pypi]
