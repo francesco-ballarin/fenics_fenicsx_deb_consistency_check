@@ -140,16 +140,17 @@ class VirtualEnv(object):
                 f"{self.executable} -m pip install --upgrade pip", shell=True, capture_output=True)
             assert run_update_pip_again.returncode == 0, "Failed to upgrade pip"
 
-    def install_package(self, package: str) -> None:
+    def install_package(self, package: str, install_call: typing.Optional[str] = None) -> None:
         """Install a package in the virtual environment."""
-        run_install = subprocess.run(
-            f"{self.executable} -m pip install --ignore-installed --break-system-packages {package}",
-            shell=True, capture_output=True)
+        if install_call is None:
+            install_call = f"pip install --ignore-installed --break-system-packages {package}"
+        run_install = subprocess.run(f"{self.executable} -m {install_call}", shell=True, capture_output=True)
         if run_install.returncode != 0:
             raise RuntimeError(
                 f"Installing {package} was not successful.\n"
                 f"stdout contains {run_install.stdout.decode()}\n"
-                f"stderr contains {run_install.stderr.decode()}")
+                f"stderr contains {run_install.stderr.decode()}"
+            )
 
     def break_package(self, package: str) -> None:
         """Install a mock package in the virtual environment which errors out."""

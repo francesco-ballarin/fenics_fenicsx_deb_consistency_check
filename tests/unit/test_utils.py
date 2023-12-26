@@ -66,7 +66,7 @@ def test_virtual_env() -> None:
 
 
 def test_install_package_in_virtual_env_success() -> None:
-    """Test that installation in a virtual environment is successful."""
+    """Test that installing a package in a virtual environment is successful."""
     with VirtualEnv() as virtual_env:
         virtual_env.install_package("my-empty-package")
         assert_package_location(
@@ -76,13 +76,35 @@ def test_install_package_in_virtual_env_success() -> None:
             sys.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
         )
 
+
+def test_install_package_in_virtual_env_custom_call_success() -> None:
+    """Test that installing a package in a virtual environment with a custom installation call is successful."""
+    with VirtualEnv() as virtual_env:
+        virtual_env.install_package("my-empty-package", "pip install my-empty-package")
+        assert_package_location(
+            virtual_env.executable, "my_empty_package", str(virtual_env.dist_path / "my_empty_package" / "__init__.py")
+        )
+        assert_package_import_error(
+            sys.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
+        )
+
+
 def test_install_package_in_virtual_env_failure() -> None:
-    """Test that installation in a virtual environment is failing when the package does not exist on pypi."""
+    """Test that installing a package in a virtual environment is failing when the package does not exist on pypi."""
     with VirtualEnv() as virtual_env:
         with pytest.raises(RuntimeError) as excinfo:
             virtual_env.install_package("not-existing-package")
-        assertion_error_text = str(excinfo.value)
-        assert assertion_error_text.startswith("Installing not-existing-package was not successful")
+        runtime_error_text = str(excinfo.value)
+        assert runtime_error_text.startswith("Installing not-existing-package was not successful")
+
+
+def test_install_package_in_virtual_env_custom_call_failure() -> None:
+    """Test that installing a package in a virtual environment is failing when passing a wrong custom call."""
+    with VirtualEnv() as virtual_env:
+        with pytest.raises(RuntimeError) as excinfo:
+            virtual_env.install_package("not-really-used", "pip install --this-option-does-not-exist")
+        runtime_error_text = str(excinfo.value)
+        assert runtime_error_text.startswith("Installing not-really-used was not successful")
 
 
 def test_break_package_in_virtual_env() -> None:
