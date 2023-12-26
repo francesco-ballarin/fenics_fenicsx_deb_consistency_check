@@ -17,6 +17,13 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Verify that there is no tag with the same version number
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          if [[ -n $(git ls-remote --tags origin v${VERSION}) ]]; then
+            echo "A v${VERSION} tag already exists" && exit 1
+          fi
+        shell: bash
       - name: Delete existing branches
         run: |
           VERSION=${{ github.event.inputs.version }}
