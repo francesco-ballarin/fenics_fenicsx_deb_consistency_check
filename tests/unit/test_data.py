@@ -45,11 +45,14 @@ all_mock_golden = [
 def test_data_versions() -> None:
     """Test that the version of every mock package, dependency and golden is the same as the main package."""
     pusimp_version = importlib.metadata.version("pusimp")
-    if "0000" in pusimp_version:
-        # Versions on TestPyPI have a mock version number formed by the actual version number, a separator 0000,
+    if "9999" in pusimp_version:
+        # Versions on TestPyPI have a mock version number formed by the actual version number, a separator 9999,
         # and then the upload date to work around the fact that releases cannot be overwritten. Recognize this
         # case and transform the mock version number into the actual version number.
-        pusimp_version, _ = pusimp_version.split("0000")
+        pusimp_version, _ = pusimp_version.split("9999")
+        if pusimp_version[-1] == ".":
+            # Leading zeros are not conserved when preparing the distribution: just add it back.
+            pusimp_version = f"{pusimp_version}0"
     for mock in all_mock_packages + all_mock_dependencies + all_mock_golden:
         assert importlib.metadata.version(mock.replace("_", "-")) == pusimp_version
 

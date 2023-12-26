@@ -48,21 +48,7 @@ jobs:
         if: needs.process_inputs.outputs.index == 'TestPyPI'
         run: |
           DATETIME=$(date "+%Y%m%d%H%M%S")
-          sed -i -r "s|version = \"(.*)\"|version = \"\10000${DATETIME}\"|g" pyproject.toml
-      - name: Determine distribution version
-        id: determine_version
-        run: |
-          python3 -m pip install toml
-          VERSION=$(python3 -c 'import toml; print(toml.load("pyproject.toml")["project"]["version"])')
-          echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
-      - name: Disallow publishing development versions (PyPI only)
-        if: needs.process_inputs.outputs.index == 'PyPI'
-        run: |
-          VERSION=${{ steps.determine_version.outputs.version }}
-          if [[ ${VERSION} == *"dev"* ]]; then
-            echo "Cannot publish development version ${VERSION} on PyPI" && exit 1
-          fi
-        shell: bash
+          sed -i -r "s|version = \"(.*)\"|version = \"\19999${DATETIME}\"|g" pyproject.toml
       - name: Build distributions
         run: pipx run build
       - name: Upload distributions as an artifact
@@ -72,6 +58,18 @@ jobs:
           path: dist/
       - name: Verify distributions metadata
         run: pipx run twine check dist/*
+      - name: Determine distribution version
+        id: determine_version
+        run: |
+          python3 -m pip install wheel-filename
+          WHEELS=($(find dist -type f -name "*.whl"))
+          if [[ "${#WHEELS[@]}" == "1" ]]; then
+            VERSION=$(python3 -c "import wheel_filename; print(wheel_filename.parse_wheel_filename('${WHEELS[0]}').version)")
+            echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
+          else
+            echo "Found ${#WHEELS[@]} wheels, instead of one" && exit 1
+          fi
+        shell: bash
     outputs:
       version: ${{ steps.determine_version.outputs.version }}
 
@@ -114,6 +112,14 @@ jobs:
         with:
           name: distributions
           path: dist
+      - name: Disallow publishing development versions (PyPI only)
+        if: needs.process_inputs.outputs.index == 'PyPI'
+        run: |
+          VERSION=${{ steps.determine_version.outputs.version }}
+          if [[ ${VERSION} == *"dev"* ]]; then
+            echo "Cannot publish development version ${VERSION} on PyPI" && exit 1
+          fi
+        shell: bash
       - name: Publish package distributions
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
