@@ -9,7 +9,7 @@
 
 ## Content
 
-The logic of **pusimp** is implemented in [a single python file](https://github.com/python-pusimp/pusimp/blob/main/pusimp/prevent_user_site_imports.py), which exposes the function `pusimp.prevent_user_site_imports`. **pusimp** can be `pip install`ed from this repository.
+The logic of **pusimp** is implemented in [a single python file](https://github.com/python-pusimp/pusimp/blob/main/pusimp/prevent_user_site_imports.py), which exposes the function `pusimp.prevent_user_site_imports`. **pusimp** can be `pip install`ed from [its GitHub repository](https://github.com/python-pusimp/pusimp/) or from [PyPI](https://pypi.org/project/pusimp/).
 
 ## Sample usage
 
