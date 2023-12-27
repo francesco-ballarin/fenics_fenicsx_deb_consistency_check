@@ -51,13 +51,6 @@ jobs:
           sed -i -r "s|version = \"(.*)\"|version = \"\19999${DATETIME}\"|g" pyproject.toml
       - name: Build distributions
         run: pipx run build
-      - name: Upload distributions as an artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: distributions
-          path: dist/
-      - name: Verify distributions metadata
-        run: pipx run twine check dist/*
       - name: Determine distribution version
         id: determine_version
         run: |
@@ -70,6 +63,13 @@ jobs:
             echo "Found ${#WHEELS[@]} wheels, instead of one" && exit 1
           fi
         shell: bash
+      - name: Upload distributions as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: distributions-${{ steps.determine_version.outputs.version }}
+          path: dist/
+      - name: Verify distributions metadata
+        run: pipx run twine check dist/*
     outputs:
       version: ${{ steps.determine_version.outputs.version }}
 
@@ -110,12 +110,12 @@ jobs:
       - name: Download distributions from artifacts
         uses: actions/download-artifact@v3
         with:
-          name: distributions
+          name: distributions-${{ needs.build_distributions.outputs.version }}
           path: dist
       - name: Disallow publishing development versions (PyPI only)
         if: needs.process_inputs.outputs.index == 'PyPI'
         run: |
-          VERSION=${{ steps.determine_version.outputs.version }}
+          VERSION=${{ needs.build_distributions.outputs.version }}
           if [[ ${VERSION} == *"dev"* ]]; then
             echo "Cannot publish development version ${VERSION} on PyPI" && exit 1
           fi
