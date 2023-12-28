@@ -17,6 +17,7 @@ jobs:
     with:
       ref: v0.1.0
       index: PyPI
+      index_version: 0.1.0
 
   warn:
     runs-on: ubuntu-latest
