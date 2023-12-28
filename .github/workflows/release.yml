@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version number, without v prefix"
+        description: "Version number for the current release, without v prefix"
+      next_version:
+        description: "Version number for the next release, without v prefix and without dev"
 
 jobs:
   prepare_branches:
@@ -54,8 +56,9 @@ jobs:
       - name: Prepare branch post release
         run: |
           VERSION=${{ github.event.inputs.version }}
+          NEXT_VERSION=${{ github.event.inputs.next_version }}
           POST_BRANCH_NAME=post${VERSION}
-          DEV_VERSION=$(echo ${VERSION} | awk -F. -v OFS=. '{$NF="dev"$NF+1;print}')
+          DEV_VERSION=$(echo ${NEXT_VERSION} | awk -F. -v OFS=. '{$NF="dev"$NF;print}')
           git checkout -b ${POST_BRANCH_NAME}
           find . -type f -name pyproject.toml -exec sed -i "s|version = \"${VERSION}\"|version = \"${DEV_VERSION}\"|g" {} \;
           git add .
