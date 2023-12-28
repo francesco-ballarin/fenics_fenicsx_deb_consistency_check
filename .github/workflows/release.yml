@@ -8,7 +8,7 @@ on:
       next_version:
         description: "Version number for the next release, without v prefix and without dev"
       dry_run:
-        description: "Dry-run: if 'no', publish to PyPI, create a tag and merge to the calling branch; if 'yes', do none of the above tasks. Defaults to 'yes'."
+        description: "Dry-run: if 'no', publish to PyPI, create a tag and merge to the calling branch; if 'yes', do a dry-run where none of the above tasks are executed. If empty, its default value is 'yes' and a dry-run is carried out."
 
 jobs:
   prepare_branches:
