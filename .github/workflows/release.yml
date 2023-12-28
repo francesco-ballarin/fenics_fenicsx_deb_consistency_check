@@ -7,6 +7,8 @@ on:
         description: "Version number for the current release, without v prefix"
       next_version:
         description: "Version number for the next release, without v prefix and without dev"
+      dry_run:
+        description: "Dry-run: if 'no', publish to PyPI, create a tag and merge to the calling branch; if 'yes', do none of the above tasks. Defaults to 'yes'."
 
 jobs:
   prepare_branches:
@@ -94,6 +96,7 @@ jobs:
 
   publish_release_to_pypi:
     needs: [publish_release_to_testpypi]
+    if: github.event.inputs.dry_run == 'no'
     uses: python-pusimp/pusimp/.github/workflows/pypi.yml@main
     with:
       ref: v${{ github.event.inputs.version }}
@@ -103,6 +106,7 @@ jobs:
 
   push_to_repo_and_cleanup:
     needs: [publish_release_to_pypi]
+    if: github.event.inputs.dry_run == 'no'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
