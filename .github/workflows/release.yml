@@ -73,12 +73,30 @@ jobs:
       - name: Prepare branch for release
         run: |
           VERSION=${{ github.event.inputs.version }}
+          VERSION_DASHES=${VERSION//./_}
           RELEASE_BRANCH_NAME=v${VERSION}
           git checkout -b ${RELEASE_BRANCH_NAME}
           find . -type f -name pyproject.toml -exec sed -i "s|version = \".*\"|version = \"${VERSION}\"|g" {} \;
+          CI_AGAINST_VERSION=$(cat << EOF
+            test_${VERSION_DASHES}_installing_from_github:
+              uses: python-pusimp/pusimp/.github/workflows/ci.yml@v${VERSION}
+              with:
+                ref: v${VERSION}
+
+            test_${VERSION_DASHES}_installing_from_pypi:
+              uses: python-pusimp/pusimp/.github/workflows/ci.yml@v${VERSION}
+              with:
+                ref: v${VERSION}
+                index: PyPI
+
+            warn:
+          EOF
+          )
+          sed -i "s|  warn:|${CI_AGAINST_VERSION//$'\n'/\\n}|" .github/workflows/ci_against_releases.yml
           git add .
           git commit -m "Bump version to ${VERSION}"
           git push origin ${RELEASE_BRANCH_NAME}
+        shell: bash
       - name: Prepare branch post release
         run: |
           VERSION=${{ github.event.inputs.version }}
