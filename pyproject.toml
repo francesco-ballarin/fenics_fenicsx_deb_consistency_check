@@ -37,8 +37,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-repository = "https://github.com/francesco-ballarin/pusimp"
-issues = "https://github.com/francesco-ballarin/pusimp/issues"
+repository = "https://github.com/python-pusimp/pusimp"
+issues = "https://github.com/python-pusimp/pusimp/issues"
 
 [project.optional-dependencies]
 lint = [
