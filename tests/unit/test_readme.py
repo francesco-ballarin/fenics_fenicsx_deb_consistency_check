@@ -19,7 +19,7 @@ def test_readme() -> None:
     # Get snippets from file
     readme = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "README.md")
     assert os.path.exists(readme)
-    with open(readme, "r") as readme_file:
+    with open(readme) as readme_file:
         num_backticks_lines = 0
         code_snippet = ""
         error_snippet = ""

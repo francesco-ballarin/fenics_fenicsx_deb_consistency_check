@@ -75,7 +75,7 @@ def assert_package_import_error(
         )
 
 
-class TemporarilyEnableEnvironmentVariable(object):
+class TemporarilyEnableEnvironmentVariable:
     """Temporarily enable an environment variable in a test."""
 
     def __init__(self, variable_name: str) -> None:
@@ -95,7 +95,7 @@ class TemporarilyEnableEnvironmentVariable(object):
         del os.environ[self._variable_name]
 
 
-class VirtualEnv(object):
+class VirtualEnv:
     """Helper class to create a temporary virtual environment.
 
     Forked and simplified from https://github.com/pyscaffold/pyscaffold/blob/master/tests/virtualenv.py .
