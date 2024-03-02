@@ -2,7 +2,7 @@
 
 **pusimp** is a python library to prevent user-site imports of specific dependencies of a package. The typical scenario for using **pusimp** is in combination with a system manager (e.g., `apt` for Debian), to prevent dependencies from being loaded from user-site instead of the location provided by the system manager.
 
-**pusimp** is currently developed and maintained at [Università Cattolica del Sacro Cuore](https://www.unicatt.it/) by [Dr. Francesco Ballarin](https://www.francescoballarin.it), in collaboration with [Prof. Drew Parsons](https://web.unica.it/unica/page/en/drewf_parsons) at [Università degli Studi di Cagliari](https://www.unica.it/).
+**pusimp** is currently developed and maintained at [Università Cattolica del Sacro Cuore](https://www.unicatt.it/) by [Prof. Francesco Ballarin](https://www.francescoballarin.it), in collaboration with [Prof. Drew Parsons](https://web.unica.it/unica/page/en/drewf_parsons) at [Università degli Studi di Cagliari](https://www.unica.it/).
 
 ## The acronym
 **pusimp** is an acronym for "**p**revent **u**ser-**s**ite **imp**orts". However, an internet search reveals that PUSIMP is also a slang term that stands for "Put yourself in my position". In agreement with the slang meaning, **pusimp** reports an informative (although, arguably, quite long) error message to guide the user towards solving the conflict in their dependencies.
