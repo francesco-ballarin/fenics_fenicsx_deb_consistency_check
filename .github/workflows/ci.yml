@@ -46,7 +46,7 @@ jobs:
           - name: debian
             container: debian:testing
           - name: conda
-            container: continuumio/miniconda3
+            container: condaforge/miniforge3
       fail-fast: false
     name: ${{ matrix.name }}
     container: ${{ matrix.container }}
