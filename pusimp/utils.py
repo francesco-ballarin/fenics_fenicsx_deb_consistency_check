@@ -50,7 +50,7 @@ def assert_package_location(executable: str, package: str, package_path: str) ->
     assert run_import_file.returncode == 0, (
         "This case was never supposed to happen, because {package} did import successfully with assert_has_package")
     assert run_import_file.stdout.decode().strip() == package_path, (
-        f"{package} was expected at {package_path}, but found at run_import_file.stdout.decode().strip()")
+        f"{package} was expected at {package_path}, but found at {run_import_file.stdout.decode().strip()}")
 
 
 def assert_package_import_error(
