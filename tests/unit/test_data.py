@@ -107,10 +107,10 @@ def test_data_six() -> None:
     ) in import_error_text
     assert "To fix broken dependencies:" in import_error_text
     assert (
-        "* run 'pip show pusimp-dependency-four' in a terminal: if the location field is not "
-        f"{pusimp_golden_source.system_path} consider running 'pip uninstall pusimp-dependency-four' in a terminal, "
-        "because the broken dependency is probably being imported from a local path rather than from the path "
-        "provided by mock system package manager."
+        f"* run '{sys.executable} -m pip show pusimp-dependency-four' in a terminal: if the location field is not "
+        f"{pusimp_golden_source.system_path} consider running '{sys.executable} -m pip uninstall "
+        "pusimp-dependency-four' in a terminal, because the broken dependency is probably being imported from "
+        "a local path rather than from the path provided by mock system package manager."
     ) in import_error_text
     assert "believe that this message appears incorrectly, report this at mock contact URL ." in import_error_text
 
@@ -169,10 +169,10 @@ def test_data_eight_nine_ten() -> None:
                     "'pusimp_dependency_four is a broken package.'."
                 ) in import_error_text
                 assert (
-                    "* run 'pip show pusimp-dependency-four' in a terminal: if the location field is not "
-                    f"{mock_system_site_path} consider running 'pip uninstall pusimp-dependency-four' in a terminal, "
-                    "because the broken dependency is probably being imported from a local path rather than "
-                    "from the path provided by mock system package manager."
+                    f"* run '{sys.executable} -m pip show pusimp-dependency-four' in a terminal: if the location "
+                    f"field is not {mock_system_site_path} consider running '{sys.executable} -m pip uninstall "
+                    "pusimp-dependency-four' in a terminal, because the broken dependency is probably being imported "
+                    "from a local path rather than from the path provided by mock system package manager."
                 ) in import_error_text
             for (dependency_import_name, dependency_optional_string) in (
                 ("pusimp_dependency_five", "mandatory"),
@@ -186,7 +186,7 @@ def test_data_eight_nine_ten() -> None:
                 ) in import_error_text
                 dependency_pypi_name = dependency_import_name.replace("_", "-")
                 assert (
-                    f"* run 'pip uninstall {dependency_pypi_name}' in a terminal, "
+                    f"* run '{sys.executable} -m pip uninstall {dependency_pypi_name}' in a terminal, "
                     f"and verify that you are prompted to confirm removal of files in "
                     f"{os.path.join(mock_user_site_path, dependency_import_name)}. "
                     f"{dependency_import_name} is {dependency_optional_string}."

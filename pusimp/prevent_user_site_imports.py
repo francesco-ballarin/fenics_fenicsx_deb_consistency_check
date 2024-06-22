@@ -7,6 +7,7 @@
 
 import importlib
 import os
+import sys
 import typing
 
 
@@ -19,7 +20,7 @@ def prevent_user_site_imports(
     dependencies_pypi_name: typing.List[str],
     dependencies_optional: typing.List[bool],
     dependencies_extra_error_message: typing.List[str],
-    pip_uninstall_call: typing.Callable[[str, str], str]
+    pip_uninstall_call: typing.Callable[[str, str, str], str]
 ) -> None:
     """
     Prevent user-site imports on a specific set of dependencies.
@@ -54,9 +55,9 @@ def prevent_user_site_imports(
         Additional text, corresponding to each dependency, to be added in the error message.
         This information is only employed to prepare the text of error messages.
     pip_uninstall_call
-        A function that, given the pypi name of a dependency of the package and the path it has
-        actually been imported from, returns the string to be reported to the user on how to
-        uninstall it with pip.
+        A function that, given the python exectuable, the pypi name of a dependency of the package,
+        and the path it has actually been imported from, returns the string to be reported to
+        the user on how to uninstall it with pip.
 
     Raises
     ------
@@ -133,10 +134,10 @@ def prevent_user_site_imports(
             for (dependency_id, dependency_info) in enumerate(broken_dependencies):
                 if isinstance(dependency_info, dict):
                     broken_dependencies_fix += (
-                        f"* run 'pip show {dependencies_pypi_name[dependency_id]}' in a terminal: "
+                        f"* run '{sys.executable} -m pip show {dependencies_pypi_name[dependency_id]}' in a terminal: "
                         f"if the location field is not {os.path.dirname(os.path.dirname(dependency_info['expected']))} "
                         f"consider running "
-                        f"'{pip_uninstall_call(dependencies_pypi_name[dependency_id], 'unknown')}' "
+                        f"'{pip_uninstall_call(sys.executable, dependencies_pypi_name[dependency_id], 'unknown')}' "
                         "in a terminal, because the broken dependency is probably being imported from a local path "
                         f"rather than from the path provided by {system_manager}. "
                         f"{dependencies_extra_error_message[dependency_id]}\n"
@@ -161,7 +162,8 @@ def prevent_user_site_imports(
                 if isinstance(dependency_info, dict):
                     user_site_dependencies_fix += (
                         "* run "
-                        f"'{pip_uninstall_call(dependencies_pypi_name[dependency_id], dependency_info['actual'])}' "
+                        f"""'{pip_uninstall_call(
+                            sys.executable, dependencies_pypi_name[dependency_id], dependency_info['actual'])}' """
                         "in a terminal, and verify that you are prompted to confirm removal of files in "
                         f"{os.path.dirname(dependency_info['actual'])}. "
                         f"{dependencies_extra_error_message[dependency_id]}\n"

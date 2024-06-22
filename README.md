@@ -22,7 +22,7 @@ pusimp.prevent_user_site_imports(
     "my_package", "my_apt", "https://www.my.package",
     "/usr/lib/python3.xy/site-packages",
     ["my_dependency_one", "my_dependency_two", "my_dependency_three", "my_dependency_four"],
-    ["my-dependency-one", "my-dependency-two", "my-dependency-three", "my_dependency_four"],
+    ["my-dependency-one", "my-dependency-two", "my-dependency-three", "my-dependency-four"],
     [False, False, False, True],
     [
         "Additional message for my_dependency_one.",
@@ -30,7 +30,7 @@ pusimp.prevent_user_site_imports(
         "",
         "Maybe inform the user that my_dependency_four is optional."
     ],
-    lambda dependency_pypi_name, dependency_actual_path: f"pip uninstall {dependency_pypi_name}"
+    lambda executable, dependency_pypi_name, dependency_actual_path: f"{executable} -m pip uninstall {dependency_pypi_name}"
 )
 ```
 Suppose now to have a broken configuration in which `my_dependency_one` is missing, `my_dependency_two` is broken, while `my_dependency_three` and `my_dependency_four` are installed on the user-site location.
@@ -49,10 +49,10 @@ pusimp suggests to apply all of the following fixes:
 1) To install missing dependencies:
 * check how to install my_dependency_one with my_apt.
 2) To fix broken dependencies:
-* run 'pip show my-dependency-two' in a terminal: if the location field is not /usr/lib/python3.xy/site-packages consider running 'pip uninstall my-dependency-two' in a terminal, because the broken dependency is probably being imported from a local path rather than from the path provided by my_apt.
+* run 'python3 -m pip show my-dependency-two' in a terminal: if the location field is not /usr/lib/python3.xy/site-packages consider running 'python3 -m pip uninstall my-dependency-two' in a terminal, because the broken dependency is probably being imported from a local path rather than from the path provided by my_apt.
 3) To uninstall local dependencies:
-* run 'pip uninstall my-dependency-three' in a terminal, and verify that you are prompted to confirm removal of files in ~/.local/lib/python3.xy/site-packages/my_dependency_three.
-* run 'pip uninstall my_dependency_four' in a terminal, and verify that you are prompted to confirm removal of files in ~/.local/lib/python3.xy/site-packages/my_dependency_four. Maybe inform the user that my_dependency_four is optional.
+* run 'python3 -m pip uninstall my-dependency-three' in a terminal, and verify that you are prompted to confirm removal of files in ~/.local/lib/python3.xy/site-packages/my_dependency_three.
+* run 'python3 -m pip uninstall my-dependency-four' in a terminal, and verify that you are prompted to confirm removal of files in ~/.local/lib/python3.xy/site-packages/my_dependency_four. Maybe inform the user that my_dependency_four is optional.
 
 You can disable this check by exporting the MY_PACKAGE_ALLOW_USER_SITE_IMPORTS environment variable. Note, however, that this may break the installation provided by my_apt.
 If you believe that this message appears incorrectly, report this at https://www.my.package .

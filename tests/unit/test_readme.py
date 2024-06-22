@@ -37,6 +37,7 @@ def test_readme() -> None:
     # Generate mock site paths
     readme_system_site_path = "/usr/lib/python3.xy/site-packages"
     readme_user_site_path = "~/.local/lib/python3.xy/site-packages"
+    mock_executable_path = "python3"
     mock_system_site_path = tempfile.mkdtemp()
     mock_user_site_path = tempfile.mkdtemp()
     sys.path.insert(0, mock_user_site_path)
@@ -60,6 +61,7 @@ def test_readme() -> None:
         with pytest.raises(ImportError) as excinfo:
             importlib.import_module("my_package")
         import_error_text = str(excinfo.value)
+        import_error_text = import_error_text.replace(f"{sys.executable} -m", f"{mock_executable_path} -m")
         import_error_text = import_error_text.replace(mock_system_site_path, readme_system_site_path)
         import_error_text = import_error_text.replace(mock_user_site_path, readme_user_site_path)
         import_error_text = "\n".join([line.rstrip() for line in import_error_text.splitlines()])

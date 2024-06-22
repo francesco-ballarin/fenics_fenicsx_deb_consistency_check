@@ -80,7 +80,8 @@ def test_install_package_in_virtual_env_success() -> None:
 def test_install_package_in_virtual_env_custom_call_success() -> None:
     """Test that installing a package in a virtual environment with a custom installation call is successful."""
     with VirtualEnv() as virtual_env:
-        virtual_env.install_package("my-empty-package", "pip install my-empty-package")
+        virtual_env.install_package(
+            "my-empty-package", lambda executable, package: f"{executable} -m pip install {package}")
         assert_package_location(
             virtual_env.executable, "my_empty_package", str(virtual_env.dist_path / "my_empty_package" / "__init__.py")
         )
@@ -102,7 +103,9 @@ def test_install_package_in_virtual_env_custom_call_failure() -> None:
     """Test that installing a package in a virtual environment is failing when passing a wrong custom call."""
     with VirtualEnv() as virtual_env:
         with pytest.raises(RuntimeError) as excinfo:
-            virtual_env.install_package("not-really-used", "pip install --this-option-does-not-exist")
+            virtual_env.install_package(
+                "not-really-used",
+                lambda executable, package: f"{executable} -m pip --this-option-does-not-exist {package}")
         runtime_error_text = str(excinfo.value)
         assert runtime_error_text.startswith("Installing not-really-used was not successful")
 
@@ -122,7 +125,7 @@ def test_uninstall_package_in_virtual_env_success() -> None:
         assert_package_location(
             virtual_env.executable, "my_empty_package", str(virtual_env.dist_path / "my_empty_package" / "__init__.py")
         )
-        virtual_env.uninstall_package("my-empty-package")
+        virtual_env.uninstall_package("my-empty-package", "/not/really/used")
         assert_package_import_error(
             virtual_env.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
         )
@@ -138,7 +141,9 @@ def test_uninstall_package_in_virtual_env_custom_call_success() -> None:
         assert_package_location(
             virtual_env.executable, "my_empty_package", str(virtual_env.dist_path / "my_empty_package" / "__init__.py")
         )
-        virtual_env.uninstall_package("my-empty-package", "pip uninstall -y my-empty-package")
+        virtual_env.uninstall_package(
+            "my-empty-package", "/not/really/used",
+            lambda executable, package, _: f"{executable} -m pip uninstall -y {package}")
         assert_package_import_error(
             virtual_env.executable, "my_empty_package", ["No module named 'my_empty_package'"], [], False
         )
@@ -151,7 +156,7 @@ def test_uninstall_package_in_virtual_env_failure() -> None:
     """Test that uninstalling a package in a virtual environment is failing when the package was never installed."""
     with VirtualEnv() as virtual_env:
         with pytest.raises(RuntimeError) as excinfo:
-            virtual_env.uninstall_package("not-installed-package")
+            virtual_env.uninstall_package("not-installed-package", "/not/really/used")
         runtime_error_text = str(excinfo.value)
         assert runtime_error_text.startswith("Uninstalling not-installed-package was not successful")
 
@@ -160,7 +165,9 @@ def test_uninstall_package_in_virtual_env_custom_call_failure() -> None:
     """Test that uninstalling a package in a virtual environment is failing when passing a wrong custom call."""
     with VirtualEnv() as virtual_env:
         with pytest.raises(RuntimeError) as excinfo:
-            virtual_env.uninstall_package("not-really-used", "pip uninstall --this-option-does-not-exist")
+            virtual_env.uninstall_package(
+                "not-really-used", "/not/really/used",
+                lambda executable, package, _: f"{executable} -m pip uninstall --this-option-does-not-exist {package}")
         runtime_error_text = str(excinfo.value)
         assert runtime_error_text.startswith("Uninstalling not-really-used was not successful")
 
@@ -240,7 +247,10 @@ def test_assert_package_import_errors_with_local_packages_data(
     """Test assert_package_import_errors_with_local_packages on mock packages."""
     assert_package_import_errors_with_local_packages(
         package_name, dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name),
-        dependencies_extra_error_message, lambda dependency_pypi_name, _: f"pip uninstall {dependency_pypi_name}"
+        dependencies_extra_error_message,
+        lambda executable, dependency_pypi_name: (
+            f"{executable} -m pip install --ignore-installed {dependency_pypi_name}"),
+        lambda executable, dependency_pypi_name, _: f"{executable} -m pip uninstall {dependency_pypi_name}"
     )
 
 
@@ -275,7 +285,9 @@ def test_assert_package_import_success_with_allowed_local_packages_data(
     """Test assert_package_import_success_with_allowed_local_packages on mock packages."""
     assert_package_import_success_with_allowed_local_packages(
         package_name, os.path.join(pusimp_golden_source.system_path, package_name, "__init__.py"),
-        dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name)
+        dependencies_import_name, generate_test_data_pypi_names(dependencies_import_name),
+        lambda executable, dependency_pypi_name: (
+            f"{executable} -m pip install --ignore-installed {dependency_pypi_name}")
     )
 
 

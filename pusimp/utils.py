@@ -131,7 +131,8 @@ class VirtualEnv:
         virtualenv.cli_run(args, env=self.env)
         # virtualenv does not necessarily ship the same version of pip as the underlying environment
         run_update_pip = subprocess.run(
-            f"{self.executable} -m pip install --upgrade --break-system-packages pip", shell=True, capture_output=True)
+            f"{self.executable} -m pip install --upgrade --break-system-packages pip",
+            shell=True, env=self.env, capture_output=True)
         if run_update_pip.returncode != 0:  # pragma: no cover
             # it is possible that the version of pip shipped by virtualenv was not recent enough
             # to support --break-system-packages. The newly installed version will surely support
@@ -140,11 +141,14 @@ class VirtualEnv:
                 f"{self.executable} -m pip install --upgrade pip", shell=True, capture_output=True)
             assert run_update_pip_again.returncode == 0, "Failed to upgrade pip"
 
-    def install_package(self, package: str, install_call: typing.Optional[str] = None) -> None:
+    def install_package(
+        self, package: str, install_call: typing.Optional[typing.Callable[[str, str], str]] = None
+    ) -> None:
         """Install a package in the virtual environment."""
         if install_call is None:
-            install_call = f"pip install --ignore-installed --break-system-packages {package}"
-        run_install = subprocess.run(f"{self.executable} -m {install_call}", shell=True, capture_output=True)
+            install_call = self._default_install_call
+        run_install = subprocess.run(
+            install_call(self.executable, package), shell=True, env=self.env, capture_output=True)
         if run_install.returncode != 0:
             raise RuntimeError(
                 f"Installing {package} was not successful.\n"
@@ -152,17 +156,26 @@ class VirtualEnv:
                 f"stderr contains {run_install.stderr.decode()}"
             )
 
+    @staticmethod
+    def _default_install_call(executable: str, package: str) -> str:
+        """Return the default call to pip install."""
+        return f"{executable} -m pip install --ignore-installed --break-system-packages {package}"
+
     def break_package(self, package: str) -> None:
         """Install a mock package in the virtual environment which errors out."""
         (self.dist_path / package).mkdir()
         with (self.dist_path / package / "__init__.py").open("w") as init_file:
             init_file.write(f"raise ImportError('{package} was purposely broken.')")
 
-    def uninstall_package(self, package: str, uninstall_call: typing.Optional[str] = None) -> None:
+    def uninstall_package(
+        self, package: str, installation_path: str,
+        uninstall_call: typing.Optional[typing.Callable[[str, str, str], str]] = None
+    ) -> None:
         """Uninstall a package from the virtual environment."""
         if uninstall_call is None:
-            uninstall_call = f"pip uninstall --yes --break-system-packages {package}"
-        run_uninstall = subprocess.run(f"{self.executable} -m {uninstall_call}", shell=True, capture_output=True)
+            uninstall_call = self._default_uninstall_call
+        run_uninstall = subprocess.run(
+            uninstall_call(self.executable, package, installation_path), shell=True, env=self.env, capture_output=True)
         if (
             run_uninstall.returncode != 0
                 or
@@ -178,6 +191,11 @@ class VirtualEnv:
                 f"stderr contains {run_uninstall.stderr.decode()}"
             )
 
+    @staticmethod
+    def _default_uninstall_call(executable: str, package: str, installation_path: str) -> str:
+        """Return the default call to pip uninstall."""
+        return f"{executable} -m pip uninstall --yes --break-system-packages {package}"
+
 
 def assert_package_import_success_without_local_packages(package: str, package_path: str) -> None:
     """Assert that the package imports correctly without any local packages."""
@@ -186,14 +204,15 @@ def assert_package_import_success_without_local_packages(package: str, package_p
 
 def assert_package_import_errors_with_local_packages(
     package: str, dependencies_import_name: typing.List[str], dependencies_pypi_name: typing.List[str],
-    dependencies_extra_error_message: typing.List[str], pip_uninstall_call: typing.Callable[[str, str], str]
+    dependencies_extra_error_message: typing.List[str], pip_install_call: typing.Callable[[str, str], str],
+    pip_uninstall_call: typing.Callable[[str, str, str], str]
 ) -> None:
     """Assert that a package fails to import with local packages, but imports successfully when they are uninstalled."""
     with VirtualEnv() as virtual_env:
         # Part 1: assert that the package fails to import with local packages
         dependencies_local_paths = []
         for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
-            virtual_env.install_package(dependency_pypi_name)
+            virtual_env.install_package(dependency_pypi_name, pip_install_call)
             dependency_local_path = str(virtual_env.dist_path / dependency_import_name / "__init__.py")
             assert_package_location(virtual_env.executable, dependency_import_name, dependency_local_path)
             dependencies_local_paths.append(dependency_local_path)
@@ -206,7 +225,7 @@ def assert_package_import_errors_with_local_packages(
             for dependency_pypi_name in dependencies_pypi_name
         ]
         dependencies_error_messages.extend(
-            f"* run '{pip_uninstall_call(dependency_pypi_name, dependency_local_path)}' in"
+            f"* run '{pip_uninstall_call(virtual_env.executable, dependency_pypi_name, dependency_local_path)}' in"
             for (dependency_pypi_name, dependency_local_path) in zip(
                 dependencies_pypi_name_only, dependencies_local_paths)
         )
@@ -214,21 +233,32 @@ def assert_package_import_errors_with_local_packages(
         assert_package_import_error(virtual_env.executable, package, dependencies_error_messages, [], True)
         # Part 2: assert that the package imports successfully as soon as local packages are uninstalled
         for (dependency_pypi_name, dependency_local_path) in zip(dependencies_pypi_name_only, dependencies_local_paths):
-            dependency_pip_uninstall_call = pip_uninstall_call(dependency_pypi_name, dependency_local_path)
-            if " -y " not in dependency_pip_uninstall_call and " --yes " not in dependency_pip_uninstall_call:
-                dependency_pip_uninstall_call = dependency_pip_uninstall_call.replace(" uninstall ", " uninstall -y ")
-            virtual_env.uninstall_package(dependency_pypi_name, dependency_pip_uninstall_call)
+            virtual_env.uninstall_package(
+                dependency_pypi_name, dependency_local_path, _force_yes_in_pip_uninstall_call(pip_uninstall_call))
         assert_has_package(virtual_env.executable, package)
+
+
+def _force_yes_in_pip_uninstall_call(
+    pip_uninstall_call: typing.Callable[[str, str, str], str]
+) -> typing.Callable[[str, str, str], str]:
+    """Force pip uninstall --yes even when a plain pip uninstall is provided."""
+    def _(executable: str, package: str, installation_path: str) -> str:
+        base_call = pip_uninstall_call(executable, package, installation_path)
+        if " -y " not in base_call and " --yes " not in base_call:
+            base_call = base_call.replace(" uninstall ", " uninstall -y ")
+        return base_call
+
+    return _
 
 
 def assert_package_import_success_with_allowed_local_packages(
     package: str, package_path: str, dependencies_import_name: typing.List[str],
-    dependencies_pypi_name: typing.List[str]
+    dependencies_pypi_name: typing.List[str], pip_install_call: typing.Callable[[str, str], str]
 ) -> None:
     """Assert that a package imports correctly even with extra local packages when asked to allow user-site imports."""
     with VirtualEnv() as virtual_env:
         for (dependency_import_name, dependency_pypi_name) in zip(dependencies_import_name, dependencies_pypi_name):
-            virtual_env.install_package(dependency_pypi_name)
+            virtual_env.install_package(dependency_pypi_name, pip_install_call)
             assert_package_location(
                 virtual_env.executable, dependency_import_name,
                 str(virtual_env.dist_path / dependency_import_name / "__init__.py")
