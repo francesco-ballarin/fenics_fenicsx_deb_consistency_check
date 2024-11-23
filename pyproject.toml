@@ -85,7 +85,7 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["ANN", "D", "E", "F", "FLY", "ICN", "N", "Q", "RUF", "UP", "W"]
-ignore = ["ANN101"]
+ignore = []
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 120
